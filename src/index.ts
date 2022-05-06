@@ -1,16 +1,26 @@
 import { WebSocketServer } from "ws";
 
+import Tetris from "./core/tetris";
+
 const server = new WebSocketServer({ port: 8080 });
 
 server.on("connection", (socket) => {
-  socket.on("open", () => {
-    /* Starts sending game states on open */
-    socket.send(JSON.stringify(""));
-  });
+  const game = new Tetris();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  /* Sends initial game state on open */
+  socket.send(JSON.stringify(game));
+
+  /* Sends game state every second */
+  const interval = setInterval(async () => {
+    socket.send(JSON.stringify(game.handleBoardUpdate()));
+  }, 1000);
+
   socket.on("message", (data) => {
     /* Handles input and sends updated game state */
-    socket.send(JSON.stringify(""));
+    socket.send(JSON.stringify(game.inputHandle(data.toString())));
+  });
+
+  socket.on("close", () => {
+    clearInterval(interval);
   });
 });

@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "removeComments": true,
 
-    "outDir": "./dist",
+    "outDir": "./dist"
   },
   "include": ["src"]
 }
