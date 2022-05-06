@@ -1,0 +1,28 @@
+{
+  "name": "tetribass-server",
+  "scripts": {
+    "clean": "rm -rf node_modules && yarn cache clean",
+    "dev": "concurrently --kill-others \"tsc -w\" \"nodemon dist/index.js\"",
+    "format": "yarn lint && yarn prettier --write .",
+    "lint": "eslint . --fix --ext .js,.ts",
+    "start": "tsc && node dist/index.js",
+    "update": "yarn upgrade-interactive --latest"
+  },
+  "dependencies": {
+    "bufferutil": "^4.0.6",
+    "utf-8-validate": "^5.0.9",
+    "ws": "^8.6.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.3",
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
+    "@typescript-eslint/parser": "^5.22.0",
+    "eslint": "^8.14.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "prettier": "^2.6.2",
+    "typescript": "^4.6.4"
+  }
+}
