@@ -37,8 +37,8 @@ class Tetris {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
     this.onHold = false;
-    this.corX = 0;
-    this.corY = 0;
+    this.corX = boardWidth / 2;
+    this.corY = TetrisConsts.Y_START;
     this.ghostCorY = 0;
     this.heldTetromino = TetrisConsts.Tetromino.Blank;
     this.activeTetromino = TetrisConsts.Tetromino.Blank;
