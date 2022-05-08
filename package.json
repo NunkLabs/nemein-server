@@ -1,5 +1,7 @@
 {
   "name": "tetribass-server",
+  "repository": "https://github.com/NunkuGemu/tetribass-server",
+  "license": "MIT",
   "scripts": {
     "clean": "rm -rf node_modules && yarn cache clean",
     "dev": "concurrently --kill-others \"tsc -w\" \"nodemon dist/index.js\"",
