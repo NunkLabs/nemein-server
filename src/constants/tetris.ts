@@ -13,6 +13,9 @@ export const MAX_SPAWNED_TETROMINOS = 4;
 export const EARLY_LEVEL_MULTIPLIER = 60;
 export const LATE_LEVEL_MULTIPLIER = 0.5;
 export const INTERVAL_CAP = 900;
+export const LEVEL_UP_TETROMINOS_COUNT = 10;
+export const DEFAULT_BOARD_WIDTH = 14;
+export const DEFAULT_BOARD_HEIGHT = 23;
 
 /* Tetrominos coords consts */
 export const MAX_TETROMINO_INDEX = 7;
