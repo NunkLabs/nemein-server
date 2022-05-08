@@ -33,7 +33,16 @@ class Tetris {
 
   private gameOver: boolean;
 
-  constructor(boardWidth: number = 14, boardHeight: number = 23) {
+  private score: number;
+
+  private tetrominosCount: number;
+
+  private level: number;
+
+  private gameInterval: number;
+
+  constructor(boardWidth: number = TetrisConsts.DEFAULT_BOARD_WIDTH,
+      boardHeight: number = TetrisConsts.DEFAULT_BOARD_HEIGHT) {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
     this.onHold = false;
@@ -47,6 +56,10 @@ class Tetris {
     this.spawnedTetrominos = [];
     this.initRender = true;
     this.gameOver = false;
+    this.score = 0;
+    this.tetrominosCount = 0;
+    this.level = 1;
+    this.gameInterval = TetrisConsts.DEFAULT_TIME_INTERVAL_MS;
 
     this.initNewGame();
   }
@@ -123,6 +136,9 @@ class Tetris {
     field: TetrisCol[];
     spawnedTetrominos: TetrisConsts.Tetromino[];
     gameOver: boolean;
+    score: number;
+    level: number;
+    gameInterval: number;
   } {
     /* Handling init - We only render the newly spawned tetromino */
     if (this.initRender) {
@@ -357,6 +373,9 @@ class Tetris {
       field: this.field,
       spawnedTetrominos: this.spawnedTetrominos,
       gameOver: this.gameOver,
+      score: this.score,
+      level: this.level,
+      gameInterval: this.gameInterval,
     };
   }
 
@@ -475,6 +494,7 @@ class Tetris {
     }
 
     /* Check for complete lines and clear if there are any */
+    let numLinesCompleted = 0;
     for (let row = this.boardHeight - 1; row >= 0; row -= 1) {
       let isLineComplete = true;
 
@@ -487,6 +507,8 @@ class Tetris {
       }
 
       if (isLineComplete) {
+        numLinesCompleted += 1;
+
         for (let detectedRow = row; detectedRow > 0; detectedRow -= 1) {
           for (let col = 0; col < this.boardWidth; col += 1) {
             this.field[col].colArr[detectedRow] =
@@ -521,8 +543,37 @@ class Tetris {
     );
     this.onHold = false;
 
-    /* Check if game is over. If not, update score + spawn a new tetromino
-    + set new time interval and continue */
+    /**
+     * Update score, tetrominos count, level and interval
+     *
+     * Updating scheme as follow:
+     *  - Tetromino count: Increases by 1
+     *  - Level: Increases by 1 after everytime the tetromino count is increased
+     *      by LEVEL_UP_TETROMINOS_COUNT
+     *  - Score: Increments with the current level
+     *  - Game interval: We calculate the amount of time to subtract from the
+     *      default game interval (DEFAULT_TIME_INTERVAL_MS) based on the
+     *      current level
+     */
+    this.tetrominosCount += 1;
+    /* TODO: Add a more complex scoring system */
+    this.level = 1 + Math.floor(this.tetrominosCount
+      / TetrisConsts.LEVEL_UP_TETROMINOS_COUNT);
+    this.score += numLinesCompleted * this.level;
+
+    let newGameIntervalDecrease = this.level
+      * TetrisConsts.EARLY_LEVEL_MULTIPLIER;
+    if (newGameIntervalDecrease > TetrisConsts.INTERVAL_CAP) {
+      newGameIntervalDecrease = TetrisConsts.INTERVAL_CAP + this.level
+        * TetrisConsts.LATE_LEVEL_MULTIPLIER
+      if (newGameIntervalDecrease >= TetrisConsts.DEFAULT_TIME_INTERVAL_MS) {
+        newGameIntervalDecrease = TetrisConsts.DEFAULT_TIME_INTERVAL_MS;
+      }
+    }
+    this.gameInterval = TetrisConsts.DEFAULT_TIME_INTERVAL_MS
+      - newGameIntervalDecrease;
+
+    /* Check if game is over */
     for (
       let pixelIter = 0;
       pixelIter < TetrisConsts.MAX_PIXEL;
@@ -536,7 +587,6 @@ class Tetris {
       if (yToCheck >= 0) {
         if (this.field[xToCheck].colArr[yToCheck] !== 0) {
           this.gameOver = true;
-
           break;
         }
       }
