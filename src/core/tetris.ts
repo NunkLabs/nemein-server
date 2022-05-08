@@ -1,14 +1,33 @@
 import * as TetrisConsts from "../constants/tetris";
+import * as TetrisBoard from "./tetrisBoard";
 
-type TetrisCol = {
-  colArr: number[];
-  lowestY: number;
+type TetrisStates = {
+  corX: number;
+  corY: number;
+  ghostCorY: number;
+  heldTetromino: TetrisConsts.Tetromino;
+  activeTetromino: TetrisConsts.Tetromino;
+  activeTetrominoRotate: TetrisConsts.Rotation;
+  field: TetrisBoard.TetrisCol[];
+  spawnedTetrominos: TetrisConsts.Tetromino[];
+  gameOver: boolean;
+  score: number;
+  level: number;
+  gameInterval: number;
 };
 
 class Tetris {
   private boardWidth: number;
 
   private boardHeight: number;
+
+  private board: TetrisBoard.TetrisBoard;
+
+  /**
+   * Might be some other elegant ways to get around this but this is only for
+   * correctly typing what's returned in `const game = new Tetris();`
+   */
+  private field: TetrisBoard.TetrisCol[];
 
   private onHold: boolean;
 
@@ -25,8 +44,6 @@ class Tetris {
 
   private activeTetrominoRotate: TetrisConsts.Rotation;
 
-  private field: TetrisCol[];
-
   private spawnedTetrominos: TetrisConsts.Tetromino[];
 
   private initRender: boolean;
@@ -41,10 +58,12 @@ class Tetris {
 
   private gameInterval: number;
 
-  constructor(boardWidth: number = TetrisConsts.DEFAULT_BOARD_WIDTH,
-      boardHeight: number = TetrisConsts.DEFAULT_BOARD_HEIGHT) {
+  constructor (boardWidth: number = TetrisConsts.DEFAULT_BOARD_WIDTH,
+    boardHeight: number = TetrisConsts.DEFAULT_BOARD_HEIGHT) {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
+    this.board = new TetrisBoard.TetrisBoard(boardWidth, boardHeight);
+    this.field = this.board.getField();
     this.onHold = false;
     this.corX = boardWidth / 2;
     this.corY = TetrisConsts.Y_START;
@@ -52,7 +71,6 @@ class Tetris {
     this.heldTetromino = TetrisConsts.Tetromino.Blank;
     this.activeTetromino = TetrisConsts.Tetromino.Blank;
     this.activeTetrominoRotate = TetrisConsts.Rotation.O;
-    this.field = [];
     this.spawnedTetrominos = [];
     this.initRender = true;
     this.gameOver = false;
@@ -83,9 +101,9 @@ class Tetris {
       const spawnedTetromino =
         Math.floor(
           Math.random() *
-            (TetrisConsts.MAX_TETROMINO_INDEX -
-              TetrisConsts.MIN_TETROMINO_INDEX +
-              1)
+          (TetrisConsts.MAX_TETROMINO_INDEX -
+            TetrisConsts.MIN_TETROMINO_INDEX +
+            1)
         ) + 1;
 
       this.spawnedTetrominos.push(spawnedTetromino);
@@ -101,21 +119,6 @@ class Tetris {
     this.activeTetromino = getTetrominoRet.newTetromino;
     this.spawnedTetrominos = getTetrominoRet.newTetrominos;
     this.ghostCorY = this.prepareGhostTetrominoY();
-
-    for (let x = 0; x < this.boardWidth; x += 1) {
-      const col: number[] = [];
-
-      for (let y = 0; y < this.boardHeight; y += 1) {
-        col.push(TetrisConsts.Tetromino.Blank);
-      }
-
-      const initCol: TetrisCol = {
-        colArr: col,
-        lowestY: this.boardHeight - 1,
-      };
-
-      this.field.push(initCol);
-    }
   }
 
   /**
@@ -123,33 +126,21 @@ class Tetris {
    * or when a command is issued
    * @param: command - The command to be executed. The command is
    * always 'Down' for each tick of the game
+   * @return: Updated game states
    */
   public handleBoardUpdate(
     command: TetrisConsts.Command = TetrisConsts.Command.Down
-  ): {
-    corX: number;
-    corY: number;
-    ghostCorY: number;
-    heldTetromino: TetrisConsts.Tetromino;
-    activeTetromino: TetrisConsts.Tetromino;
-    activeTetrominoRotate: TetrisConsts.Rotation;
-    field: TetrisCol[];
-    spawnedTetrominos: TetrisConsts.Tetromino[];
-    gameOver: boolean;
-    score: number;
-    level: number;
-    gameInterval: number;
-  } {
+  ): TetrisStates {
     /* Handling init - We only render the newly spawned tetromino */
     if (this.initRender) {
-      this.renderTetromino(
+      this.board.renderTetromino(
         this.corX,
         this.ghostCorY,
         this.activeTetromino,
         this.activeTetrominoRotate,
         TetrisConsts.GHOST_TETROMINO_INDEX
       );
-      this.renderTetromino(
+      this.board.renderTetromino(
         this.corX,
         this.corY,
         this.activeTetromino,
@@ -163,14 +154,14 @@ class Tetris {
        * Remove current tetromino from field for next logic by rendering
        * blank pixels onto the board
        */
-      this.renderTetromino(
+      this.board.renderTetromino(
         this.corX,
         this.ghostCorY,
         this.activeTetromino,
         this.activeTetrominoRotate,
         TetrisConsts.Tetromino.Blank
       );
-      this.renderTetromino(
+      this.board.renderTetromino(
         this.corX,
         this.corY,
         this.activeTetromino,
@@ -190,7 +181,8 @@ class Tetris {
           testCorX = this.corX - 1;
 
           if (
-            this.isMoveValid(
+            this.board.isTetrominoRenderable(
+              false,
               testCorX,
               this.corY,
               this.activeTetromino,
@@ -206,7 +198,8 @@ class Tetris {
           testCorX = this.corX + 1;
 
           if (
-            this.isMoveValid(
+            this.board.isTetrominoRenderable(
+              false,
               testCorX,
               this.corY,
               this.activeTetromino,
@@ -234,13 +227,13 @@ class Tetris {
             let proceedTestingOffset = true;
 
             if (this.activeTetromino === TetrisConsts.Tetromino.T) {
-              const inNotPossibleCases =
+              const inImpossibleCases =
                 (this.activeTetrominoRotate === TetrisConsts.Rotation.O &&
                   testOffsetIdx === 3) ||
                 (this.activeTetrominoRotate === TetrisConsts.Rotation.Z &&
                   testOffsetIdx === 2);
 
-              if (inNotPossibleCases) {
+              if (inImpossibleCases) {
                 proceedTestingOffset = false;
               }
             }
@@ -251,7 +244,8 @@ class Tetris {
               testCorY = this.corY + testOffset[TetrisConsts.Y_INDEX];
 
               if (
-                this.isMoveValid(
+                this.board.isTetrominoRenderable(
+                  false,
                   testCorX,
                   testCorY,
                   this.activeTetromino,
@@ -270,7 +264,8 @@ class Tetris {
         }
         case TetrisConsts.Command.Down: {
           testCorY = this.corY + 1;
-          yAddValid = this.isMoveValid(
+          yAddValid = this.board.isTetrominoRenderable(
+            false,
             this.corX,
             testCorY,
             this.activeTetromino,
@@ -325,20 +320,20 @@ class Tetris {
       }
 
       /* Render new tetromino after the new coords are updated */
-      this.ghostCorY = this.findGhostTetrominoY(
+      this.ghostCorY = this.board.findGhostTetrominoY(
         this.corX,
         this.corY,
         this.activeTetromino,
         this.activeTetrominoRotate
       );
-      this.renderTetromino(
+      this.board.renderTetromino(
         this.corX,
         this.ghostCorY,
         this.activeTetromino,
         this.activeTetrominoRotate,
         TetrisConsts.GHOST_TETROMINO_INDEX
       );
-      this.renderTetromino(
+      this.board.renderTetromino(
         this.corX,
         this.corY,
         this.activeTetromino,
@@ -349,7 +344,6 @@ class Tetris {
       /* Handling blocked movement */
       if (!yAddValid) {
         this.handleBlockedMovement();
-
         /* Game over */
         if (!this.gameOver) {
           /**
@@ -370,7 +364,7 @@ class Tetris {
       heldTetromino: this.heldTetromino,
       activeTetromino: this.activeTetromino,
       activeTetrominoRotate: this.activeTetrominoRotate,
-      field: this.field,
+      field: this.board.getField(),
       spawnedTetrominos: this.spawnedTetrominos,
       gameOver: this.gameOver,
       score: this.score,
@@ -383,19 +377,10 @@ class Tetris {
    * @brief: inputHandle: Callback for the event of keyboard
    * input being received; translate the event keycode to the corresponding
    * command
-   * @param[in]: event - The keyboard event received
+   * @param: event - The keyboard event received
+   * @return: Updated game states
    */
-  public inputHandle(key: string): {
-    corX: number;
-    corY: number;
-    ghostCorY: number;
-    heldTetromino: TetrisConsts.Tetromino;
-    activeTetromino: TetrisConsts.Tetromino;
-    activeTetrominoRotate: TetrisConsts.Rotation;
-    field: TetrisCol[];
-    spawnedTetrominos: TetrisConsts.Tetromino[];
-    gameOver: boolean;
-  } {
+  public inputHandle(key: string): TetrisStates {
     switch (key) {
       case TetrisConsts.ARROW_LEFT:
         return this.handleBoardUpdate(TetrisConsts.Command.Left);
@@ -413,62 +398,7 @@ class Tetris {
   }
 
   /**
-   * @brief: isMoveValid: Check if this next move is being valid or not:
-   *  Does the current tetromino go out of the board?
-   *  Is is blocked by other tetrominos?
-   * @param: corX - Center of rotation's x
-   * @param: corY - Center of rotation's y
-   * @param: tetromino: Type of tetromino
-   * @param: tetrominoRotate: Rotation of tetromino
-   * @return: True if the move is valid, false otw
-   */
-  private isMoveValid(
-    corX: number,
-    corY: number,
-    tetromino: TetrisConsts.Tetromino,
-    tetrominoRotate: TetrisConsts.Rotation
-  ): boolean {
-    const tetrominos = TetrisConsts.TETROMINOS_COORDS_ARR;
-
-    /* We scan through each pixel of the tetromino to determine if the move is
-    valid */
-    for (
-      let pixelIter = 0;
-      pixelIter < TetrisConsts.MAX_PIXEL;
-      pixelIter += 1
-    ) {
-      /* Check to see if any pixel goes out of the board */
-      /* HACK - We check pixels' y coords first to safely render tetrominos
-      pixel by pixel initially */
-      const coord = tetrominos[tetromino][tetrominoRotate][pixelIter];
-      const yToCheck = corY + coord[TetrisConsts.Y_INDEX];
-      const xToCheck = corX + coord[TetrisConsts.X_INDEX];
-      const xValid = xToCheck >= 0 && xToCheck < this.boardWidth;
-
-      if (yToCheck >= 0) {
-        const yValid = yToCheck < this.boardHeight;
-
-        if (xValid && yValid) {
-          /* Check for any overlap */
-          const pixelOverlapped = this.field[xToCheck].colArr[yToCheck] !== 0;
-
-          if (pixelOverlapped) {
-            return false;
-          }
-        } else {
-          return false;
-        }
-      } else if (!xValid) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * @brief: handleBlockedMovement: Handle for blocked movements
-   * @return: True if the game is over, false otw
+   * @brief: handleBlockedMovement: Handler for blocked movements
    */
   private handleBlockedMovement(): void {
     const tetrominos = TetrisConsts.TETROMINOS_COORDS_ARR;
@@ -484,48 +414,10 @@ class Tetris {
       const xToRender = this.corX + coord[TetrisConsts.X_INDEX];
       const yToRender = this.corY + coord[TetrisConsts.Y_INDEX];
 
-      if (yToRender >= 0) {
-        const { lowestY } = this.field[xToRender];
-
-        if (lowestY > yToRender) {
-          this.field[xToRender].lowestY = yToRender;
-        }
-      }
+      this.board.updateColLowestY(xToRender, yToRender);
     }
 
-    /* Check for complete lines and clear if there are any */
-    let numLinesCompleted = 0;
-    for (let row = this.boardHeight - 1; row >= 0; row -= 1) {
-      let isLineComplete = true;
-
-      for (let col = 0; col < this.boardWidth; col += 1) {
-        if (this.field[col].colArr[row] === 0) {
-          isLineComplete = false;
-
-          break;
-        }
-      }
-
-      if (isLineComplete) {
-        numLinesCompleted += 1;
-
-        for (let detectedRow = row; detectedRow > 0; detectedRow -= 1) {
-          for (let col = 0; col < this.boardWidth; col += 1) {
-            this.field[col].colArr[detectedRow] =
-              this.field[col].colArr[detectedRow - 1];
-          }
-        }
-
-        row += 1;
-
-        /* Update the lowest row value for each col */
-        for (let col = 0; col < this.boardWidth; col += 1) {
-          if (this.field[col].lowestY !== this.boardHeight - 1) {
-            this.field[col].lowestY += 1;
-          }
-        }
-      }
-    }
+    const numLinesCompleted = this.board.clearLines();
 
     /* Prepare new tetromino for the next board update */
     const getTetrominoRet = Tetris.getNewTetromino(this.spawnedTetrominos);
@@ -535,7 +427,7 @@ class Tetris {
     this.corX = Math.floor(this.boardWidth / 2);
     this.corY = TetrisConsts.Y_START;
     this.activeTetrominoRotate = TetrisConsts.Rotation.O;
-    this.ghostCorY = this.findGhostTetrominoY(
+    this.ghostCorY = this.board.findGhostTetrominoY(
       this.corX,
       this.corY,
       this.activeTetromino,
@@ -574,124 +466,10 @@ class Tetris {
       - newGameIntervalDecrease;
 
     /* Check if game is over */
-    for (
-      let pixelIter = 0;
-      pixelIter < TetrisConsts.MAX_PIXEL;
-      pixelIter += 1
-    ) {
-      const coord =
-        tetrominos[this.activeTetromino][this.activeTetrominoRotate][pixelIter];
-      const xToCheck = this.corX + coord[TetrisConsts.X_INDEX];
-      const yToCheck = this.corY + coord[TetrisConsts.Y_INDEX];
-
-      if (yToCheck >= 0) {
-        if (this.field[xToCheck].colArr[yToCheck] !== 0) {
-          this.gameOver = true;
-          break;
-        }
-      }
+    if (!this.board.isTetrominoRenderable(true, this.corX, this.corY,
+      this.activeTetromino, this.activeTetrominoRotate)) {
+      this.gameOver = true;
     }
-  }
-
-  /**
-   * @brief: findGhostTetrominoY: Find the optimal Y for the ghost tetromino
-   * @param: corX - Center of rotation's x
-   * @param: corY - Center of rotation's y
-   * @param: tetromino: Type of tetromino
-   * @param: tetrominoRotate: Rotation of tetromino
-   * @return: Optimal Y for the ghost tetromino
-   */
-  private findGhostTetrominoY(
-    corX: number,
-    corY: number,
-    tetromino: TetrisConsts.Tetromino,
-    tetrominoRotate: TetrisConsts.Rotation
-  ): number {
-    const tetrominos = TetrisConsts.TETROMINOS_COORDS_ARR;
-
-    /* First we find the lowest Y among the number of cols this tetromino
-    spans */
-    let yHigherThanCmp = false;
-    const yToCmpArr: number[] = [];
-
-    for (
-      let pixelIter = 0;
-      pixelIter < TetrisConsts.MAX_PIXEL;
-      pixelIter += 1
-    ) {
-      const coord = tetrominos[tetromino][tetrominoRotate][pixelIter];
-      const xToCheck = corX + coord[TetrisConsts.X_INDEX];
-      const yToCheck = corY + coord[TetrisConsts.Y_INDEX];
-
-      if (yToCheck >= 0) {
-        const xValid = xToCheck >= 0 && xToCheck < this.boardWidth;
-        const yValid = yToCheck < this.boardHeight;
-
-        if (xValid && yValid) {
-          const yToCmp = this.field[xToCheck].lowestY;
-
-          /* If the current tetromino is already higher than the lowest Y among
-          the X range, we have to handle it differently */
-          if (yToCheck > yToCmp) {
-            yHigherThanCmp = true;
-            break;
-          }
-
-          if (!yToCmpArr.includes(yToCmp)) {
-            yToCmpArr.push(yToCmp);
-          }
-        }
-      }
-    }
-
-    let retGhostCorY = 0;
-
-    /* We have to manually look for the best fit of the tetromino since the
-    lowest Y doesn't help here */
-    if (yHigherThanCmp) {
-      let iterY = 0;
-
-      while (this.isMoveValid(corX, corY + iterY, tetromino, tetrominoRotate)) {
-        iterY += 1;
-      }
-
-      retGhostCorY = corY + iterY - 1;
-
-      return retGhostCorY;
-    }
-
-    const lowestY = Math.min.apply(null, yToCmpArr);
-    /* We find the correct starting point for the pivot */
-    const pixelsToPivot =
-      tetrominos[tetromino][tetrominoRotate][TetrisConsts.UPPER_Y_INDEX][
-        TetrisConsts.Y_INDEX
-      ];
-    retGhostCorY = lowestY - 1 - pixelsToPivot;
-
-    /* Since we might change the pivot for the tetrominos in the future,
-      it is best to try to find the best fit for the tetromino starting from
-      the lowest Y we just found. We first try to go upwards (Y increases) */
-    let upperBoundAttempts = 0;
-
-    while (
-      this.isMoveValid(corX, retGhostCorY + 1, tetromino, tetrominoRotate)
-    ) {
-      retGhostCorY += 1;
-      upperBoundAttempts += 1;
-    }
-
-    /* If the number of attempts to move Y upwards is not 0, it means that the
-      actual point to render the ghost tetromino is in the upper region */
-    if (upperBoundAttempts !== 0) {
-      return retGhostCorY;
-    }
-
-    /* Otherwise, it is in the lower region */
-    while (!this.isMoveValid(corX, retGhostCorY, tetromino, tetrominoRotate)) {
-      retGhostCorY -= 1;
-    }
-
-    return retGhostCorY;
   }
 
   /**
@@ -709,53 +487,17 @@ class Tetris {
 
     const pixelsToPivot =
       tetrominos[this.activeTetromino][this.activeTetrominoRotate][
-        TetrisConsts.UPPER_Y_INDEX
+      TetrisConsts.UPPER_Y_INDEX
       ][TetrisConsts.Y_INDEX];
 
     return this.boardHeight - 1 - pixelsToPivot;
   }
 
   /**
-   * @brief: renderTetromino: Render the desired tetromino
-   * @note: Field state will be updated after the function returns
-   * @param: corX - Center of rotation's x
-   * @param: corY - Center of rotation's y
-   * @param: tetromino - Type of tetromino
-   * @param: tetrominoRotate - Rotation of tetromino
-   * @param: renderValue - Render value (color of tetromino)
-   */
-  private renderTetromino(
-    corX: number,
-    corY: number,
-    tetromino: TetrisConsts.Tetromino,
-    tetrominoRotate: TetrisConsts.Rotation,
-    renderValue: number
-  ): TetrisCol[] {
-    const tetrominos = TetrisConsts.TETROMINOS_COORDS_ARR;
-    const retField = this.field;
-
-    for (
-      let pixelIter = 0;
-      pixelIter < TetrisConsts.MAX_PIXEL;
-      pixelIter += 1
-    ) {
-      const coord = tetrominos[tetromino][tetrominoRotate][pixelIter];
-      const xToRender = corX + coord[TetrisConsts.X_INDEX];
-      const yToRender = corY + coord[TetrisConsts.Y_INDEX];
-
-      if (yToRender >= 0) {
-        retField[xToRender].colArr[yToRender] = renderValue;
-      }
-    }
-
-    return retField;
-  }
-
-  /**
    * @brief: getNewTetromino: Get a tetromino from the spawned tetrominos queue.
    * If the queue's size is less than the maximum size, we add to it
    * a new tetromino.
-   * @param[in]: tetrominos - Spawned tetrominos queue
+   * @param: tetrominos - Spawned tetrominos queue
    * @return: newTetromino - Tetromino pop from the queue
    *          newTetrominos - Updated queue
    */
@@ -777,9 +519,9 @@ class Tetris {
       retTetrominos.push(
         Math.floor(
           Math.random() *
-            (TetrisConsts.MAX_TETROMINO_INDEX -
-              TetrisConsts.MIN_TETROMINO_INDEX +
-              1)
+          (TetrisConsts.MAX_TETROMINO_INDEX -
+            TetrisConsts.MIN_TETROMINO_INDEX +
+            1)
         ) + 1
       );
     }
