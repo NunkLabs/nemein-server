@@ -1,5 +1,11 @@
-import * as TetrisBoard from "./tetrisBoard";
-import * as TetrominoManager from "./tetrominoManager";
+import {
+  Y_START, DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_HEIGHT, TetrisBoard,
+  TetrisCol
+} from "./tetrisBoard";
+import {
+  MAX_ROTATE, X_INDEX, Y_INDEX, TetrominoType, TetrominoRotation,
+  TetrominoManager, Tetromino
+} from "./tetrominoManager";
 
 /* Keyboard event consts */
 export const ARROW_DOWN = "ArrowDown";
@@ -31,11 +37,11 @@ type TetrisStates = {
   corX: number;
   corY: number;
   ghostCorY: number;
-  heldTetromino: TetrominoManager.TetrominoType;
-  activeTetromino: TetrominoManager.TetrominoType;
-  activeTetrominoRotate: TetrominoManager.TetrominoRotation;
-  spawnedTetrominos: TetrominoManager.TetrominoType[];
-  field: TetrisBoard.TetrisCol[];
+  heldTetromino: TetrominoType;
+  activeTetromino: TetrominoType;
+  activeTetrominoRotate: TetrominoRotation;
+  spawnedTetrominos: TetrominoType[];
+  field: TetrisCol[];
   gameOver: boolean;
   score: number;
   level: number;
@@ -45,7 +51,7 @@ type TetrisStates = {
 export class Tetris {
   private boardWidth: number;
 
-  private board: TetrisBoard.TetrisBoard;
+  private board: TetrisBoard;
 
   private onHold: boolean;
 
@@ -56,7 +62,7 @@ export class Tetris {
 
   private ghostCorY: number;
 
-  private tetrominoManager: TetrominoManager.TetrominoManager;
+  private tetrominoManager: TetrominoManager;
 
   private initRender: boolean;
 
@@ -70,15 +76,15 @@ export class Tetris {
 
   private gameInterval: number;
 
-  constructor (boardWidth: number = TetrisBoard.DEFAULT_BOARD_WIDTH,
-    boardHeight: number = TetrisBoard.DEFAULT_BOARD_HEIGHT) {
+  constructor (boardWidth: number = DEFAULT_BOARD_WIDTH,
+    boardHeight: number = DEFAULT_BOARD_HEIGHT) {
     this.boardWidth = boardWidth;
-    this.board = new TetrisBoard.TetrisBoard(boardWidth, boardHeight);
+    this.board = new TetrisBoard(boardWidth, boardHeight);
     this.onHold = false;
     this.corX = boardWidth / 2;
-    this.corY = TetrisBoard.Y_START;
+    this.corY = Y_START;
     this.ghostCorY = 0;
-    this.tetrominoManager = new TetrominoManager.TetrominoManager();
+    this.tetrominoManager = new TetrominoManager();
     this.initRender = true;
     this.gameOver = false;
     this.score = 0;
@@ -108,15 +114,14 @@ export class Tetris {
    * we simply return the current game states without making any changes
    * @return: Updated game states
    */
-  public updateGameStates(
-    command: Command | undefined): TetrisStates {
+  public updateGameStates(command: Command | null = null): TetrisStates {
     let activeTetromino = this.tetrominoManager.getActiveTetromino();
-    if (command !== undefined) {
+    if (command !== null) {
       /* Handling init - We only render the newly spawned tetromino */
       if (this.initRender) {
         this.board.renderTetromino(this.corX, this.ghostCorY,
           activeTetromino.type, activeTetromino.rotation,
-          TetrominoManager.TetrominoType.Ghost);
+          TetrominoType.Ghost);
         this.board.renderTetromino(this.corX, this.corY,
           activeTetromino.type, activeTetromino.rotation, activeTetromino.type);
         this.initRender = false;
@@ -127,10 +132,10 @@ export class Tetris {
          */
         this.board.renderTetromino(this.corX, this.ghostCorY,
           activeTetromino.type, activeTetromino.rotation,
-          TetrominoManager.TetrominoType.Blank);
+          TetrominoType.Blank);
         this.board.renderTetromino(this.corX, this.corY,
           activeTetromino.type, activeTetromino.rotation,
-          TetrominoManager.TetrominoType.Blank);
+          TetrominoType.Blank);
 
         let yAddValid = true;
         let testCorX = 0;
@@ -160,10 +165,10 @@ export class Tetris {
           }
           case Command.Rotate: {
             testRotate =
-              (activeTetromino.rotation + 1) % TetrominoManager.MAX_ROTATE;
+              (activeTetromino.rotation + 1) % MAX_ROTATE;
 
             const testOffsetArr =
-              TetrominoManager.TetrominoManager.getTetrominoWallKickOffsets(
+              TetrominoManager.getTetrominoWallKickOffsets(
                 activeTetromino.type, activeTetromino.rotation);
 
             /* SRS's wall-kick testing (https://harddrop.com/wiki/SRS) */
@@ -173,14 +178,14 @@ export class Tetris {
               testOffsetIdx += 1
             ) {
               testOffset = testOffsetArr[testOffsetIdx];
-              testCorX = this.corX + testOffset[TetrominoManager.X_INDEX];
-              testCorY = this.corY + testOffset[TetrominoManager.Y_INDEX];
+              testCorX = this.corX + testOffset[X_INDEX];
+              testCorY = this.corY + testOffset[Y_INDEX];
 
               if (this.board.isTetrominoRenderable(false, testCorX, testCorY,
                 activeTetromino.type, testRotate)) {
                 this.corX = testCorX;
                 this.corY = testCorY;
-                const newActiveTetromino: TetrominoManager.Tetromino = {
+                const newActiveTetromino: Tetromino = {
                   type: activeTetromino.type,
                   rotation: testRotate,
                 };
@@ -208,7 +213,7 @@ export class Tetris {
             if (!this.onHold) {
               this.tetrominoManager.swapHeldTetromino();
               this.corX = Math.floor(this.boardWidth / 2);
-              this.corY = TetrisBoard.Y_START;
+              this.corY = Y_START;
               this.onHold = true;
             }
             break;
@@ -229,7 +234,7 @@ export class Tetris {
           activeTetromino.type, activeTetromino.rotation);
         this.board.renderTetromino(this.corX, this.ghostCorY,
           activeTetromino.type, activeTetromino.rotation,
-          TetrominoManager.TetrominoType.Ghost);
+          TetrominoType.Ghost);
         this.board.renderTetromino(this.corX, this.corY, activeTetromino.type,
           activeTetromino.rotation, activeTetromino.type);
 
@@ -258,7 +263,7 @@ export class Tetris {
       activeTetromino: activeTetromino.type,
       activeTetrominoRotate: activeTetromino.rotation,
       field: this.board.getField(),
-      spawnedTetrominos: <TetrominoManager.TetrominoType[]>
+      spawnedTetrominos: <TetrominoType[]>
         this.tetrominoManager.getSpawnedTetrominos(true),
       gameOver: this.gameOver,
       score: this.score,
@@ -305,7 +310,7 @@ export class Tetris {
     /* Prepare new tetromino for the next board update */
     activeTetromino = this.tetrominoManager.getNewTetromino();
     this.corX = Math.floor(this.boardWidth / 2);
-    this.corY = TetrisBoard.Y_START;
+    this.corY = Y_START;
     this.ghostCorY = this.board.findGhostTetrominoY(this.corX, this.corY,
       activeTetromino.type, activeTetromino.rotation);
     this.onHold = false;
