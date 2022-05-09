@@ -1,5 +1,12 @@
-import * as TetrisConsts from "../constants/tetris";
+import * as TetrominoManager from "./tetrominoManager";
 
+/* Misc consts */
+export const Y_START = 0;
+export const MAX_PIXEL = 4;
+export const DEFAULT_BOARD_WIDTH = 14;
+export const DEFAULT_BOARD_HEIGHT = 23;
+
+/* Enum types */
 export type TetrisCol = {
   colArr: number[];
   lowestY: number;
@@ -12,8 +19,8 @@ export class TetrisBoard {
 
   private field: TetrisCol[];
 
-  constructor (boardWidth: number = TetrisConsts.DEFAULT_BOARD_WIDTH,
-    boardHeight: number = TetrisConsts.DEFAULT_BOARD_HEIGHT) {
+  constructor (boardWidth: number = DEFAULT_BOARD_WIDTH,
+    boardHeight: number = DEFAULT_BOARD_HEIGHT) {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
     this.field = [];
@@ -21,12 +28,15 @@ export class TetrisBoard {
     this.initField();
   }
 
+  /**
+   * @brief: initField: Initialize the play field with all blank pixels
+   */
   private initField(): void {
     for (let x = 0; x < this.boardWidth; x += 1) {
       const col: number[] = [];
 
       for (let y = 0; y < this.boardHeight; y += 1) {
-        col.push(TetrisConsts.Tetromino.Blank);
+        col.push(TetrominoManager.TetrominoType.Blank);
       }
 
       const initCol: TetrisCol = {
@@ -89,16 +99,30 @@ export class TetrisBoard {
   }
 
   /**
-   * @brief:updateColLowestY: Set the lowest Y value of a column
-   * @param x: Column index in the field
-   * @param y: Lowest Y to set
+   * @brief: updateColLowestY: Set the lowest y values of all columns spanned
+   * by a Tetromino at a certain center of rotation
+   * @param corX: Center of rotation's x
+   * @param corY: Center of rotation's y
+   * @param type: Type of Tetromino
+   * @param rotation: Tetromino's rotation
    */
-  public updateColLowestY(x: number, y: number): void {
-    if (y >= 0) {
-      const xCol = this.field[x];
+  public updateColLowestY(corX: number, corY: number,
+    type: TetrominoManager.TetrominoType,
+    rotation: TetrominoManager.TetrominoRotation): void {
+    const tetrominoCoords =
+      TetrominoManager.TetrominoManager.getTetrominoCoords(type, rotation);
 
-      if (xCol.lowestY > y) {
-        this.field[x].lowestY = y;
+    for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
+      const coord = tetrominoCoords[pixelIter];
+      const xToRender = corX + coord[TetrominoManager.X_INDEX];
+      const yToRender = corY + coord[TetrominoManager.Y_INDEX];
+
+      if (yToRender >= 0) {
+        const xCol = this.field[xToRender];
+
+        if (xCol.lowestY > yToRender) {
+          this.field[xToRender].lowestY = yToRender;
+        }
       }
     }
   }
@@ -107,27 +131,19 @@ export class TetrisBoard {
    * @brief: renderTetromino: Render the desired tetromino
    * @param: corX - Center of rotation's x
    * @param: corY - Center of rotation's y
-   * @param: tetromino - Type of tetromino
-   * @param: tetrominoRotate - Rotation of tetromino
-   * @param: renderValue - Render value (color of tetromino)
+   * @param: type - Type of tetromino
+   * @param: rotation - Rotation of tetromino
+   * @param: renderValue - Render value (color of Tetromino)
    */
-  public renderTetromino(
-    corX: number,
-    corY: number,
-    tetromino: TetrisConsts.Tetromino,
-    tetrominoRotate: TetrisConsts.Rotation,
-    renderValue: number
-  ): void {
-    const tetrominos = TetrisConsts.TETROMINOS_COORDS_ARR;
-
-    for (
-      let pixelIter = 0;
-      pixelIter < TetrisConsts.MAX_PIXEL;
-      pixelIter += 1
-    ) {
-      const coord = tetrominos[tetromino][tetrominoRotate][pixelIter];
-      const xToRender = corX + coord[TetrisConsts.X_INDEX];
-      const yToRender = corY + coord[TetrisConsts.Y_INDEX];
+  public renderTetromino(corX: number, corY: number,
+    type: TetrominoManager.TetrominoType,
+    rotation: TetrominoManager.TetrominoRotation, renderValue: number): void {
+    const tetrominoCoords =
+      TetrominoManager.TetrominoManager.getTetrominoCoords(type, rotation);
+    for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
+      const coord = tetrominoCoords[pixelIter];
+      const xToRender = corX + coord[TetrominoManager.X_INDEX];
+      const yToRender = corY + coord[TetrominoManager.Y_INDEX];
 
       if (yToRender >= 0) {
         this.field[xToRender].colArr[yToRender] = renderValue;
@@ -142,34 +158,27 @@ export class TetrisBoard {
    * @param: newlySpawned: If the Tetromino is newly spawned
    * @param: corX - Center of rotation's x
    * @param: corY - Center of rotation's y
-   * @param: tetromino: Type of tetromino
-   * @param: tetrominoRotate: Rotation of tetromino
+   * @param: type: Type of tetromino
+   * @param: rotation: Rotation of tetromino
    * @return: True if renderable, false otw
    */
-  public isTetrominoRenderable(
-    newlySpawned: boolean,
-    corX: number,
-    corY: number,
-    tetromino: TetrisConsts.Tetromino,
-    tetrominoRotate: TetrisConsts.Rotation
+  public isTetrominoRenderable(newlySpawned: boolean, corX: number,
+    corY: number, type: TetrominoManager.TetrominoType,
+    rotation: TetrominoManager.TetrominoRotation,
   ): boolean {
-    const tetrominos = TetrisConsts.TETROMINOS_COORDS_ARR;
-
     let ret = true;
 
+    const tetrominoCoords =
+      TetrominoManager.TetrominoManager.getTetrominoCoords(type, rotation);
     /* We scan through each pixel of the tetromino to determine if the move is
     valid */
-    for (
-      let pixelIter = 0;
-      pixelIter < TetrisConsts.MAX_PIXEL;
-      pixelIter += 1
-    ) {
+    for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
       /* Check to see if any pixel goes out of the board */
       /* HACK - We check pixels' y coords first to safely render tetrominos
       pixel by pixel initially */
-      const coord = tetrominos[tetromino][tetrominoRotate][pixelIter];
-      const yToCheck = corY + coord[TetrisConsts.Y_INDEX];
-      const xToCheck = corX + coord[TetrisConsts.X_INDEX];
+      const coord = tetrominoCoords[pixelIter];
+      const xToCheck = corX + coord[TetrominoManager.X_INDEX];
+      const yToCheck = corY + coord[TetrominoManager.Y_INDEX];
       const xValid = xToCheck >= 0 && xToCheck < this.boardWidth;
 
       if (yToCheck >= 0) {
@@ -212,31 +221,25 @@ export class TetrisBoard {
    * @brief: findGhostTetrominoY: Find the optimal Y for the ghost tetromino
    * @param: corX - Center of rotation's x
    * @param: corY - Center of rotation's y
-   * @param: tetromino: Type of tetromino
-   * @param: tetrominoRotate: Rotation of tetromino
+   * @param: type: Type of tetromino
+   * @param: rotation: Rotation of tetromino
    * @return: Optimal Y for the ghost tetromino
    */
-  public findGhostTetrominoY(
-    corX: number,
-    corY: number,
-    tetromino: TetrisConsts.Tetromino,
-    tetrominoRotate: TetrisConsts.Rotation
+  public findGhostTetrominoY(corX: number, corY: number,
+    type: TetrominoManager.TetrominoType,
+    rotation: TetrominoManager.TetrominoRotation,
   ): number {
-    const tetrominos = TetrisConsts.TETROMINOS_COORDS_ARR;
-
     /* First we find the lowest Y among the number of cols this tetromino
     spans */
     let yHigherThanCmp = false;
     const yToCmpArr: number[] = [];
 
-    for (
-      let pixelIter = 0;
-      pixelIter < TetrisConsts.MAX_PIXEL;
-      pixelIter += 1
-    ) {
-      const coord = tetrominos[tetromino][tetrominoRotate][pixelIter];
-      const xToCheck = corX + coord[TetrisConsts.X_INDEX];
-      const yToCheck = corY + coord[TetrisConsts.Y_INDEX];
+    const tetrominoCoords =
+      TetrominoManager.TetrominoManager.getTetrominoCoords(type, rotation);
+    for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
+      const coord = tetrominoCoords[pixelIter];
+      const xToCheck = corX + coord[TetrominoManager.X_INDEX];
+      const yToCheck = corY + coord[TetrominoManager.Y_INDEX];
 
       if (yToCheck >= 0) {
         const xValid = xToCheck >= 0 && xToCheck < this.boardWidth;
@@ -266,8 +269,8 @@ export class TetrisBoard {
     if (yHigherThanCmp) {
       let iterY = 0;
 
-      while (this.isTetrominoRenderable(false, corX, corY + iterY, tetromino,
-        tetrominoRotate)) {
+      while (this.isTetrominoRenderable(false, corX, corY + iterY,
+        type, rotation)) {
         iterY += 1;
       }
       retGhostCorY = corY + iterY - 1;
@@ -276,10 +279,8 @@ export class TetrisBoard {
 
     const lowestY = Math.min.apply(null, yToCmpArr);
     /* We find the correct starting point for the pivot */
-    const pixelsToPivot =
-      tetrominos[tetromino][tetrominoRotate][TetrisConsts.UPPER_Y_INDEX][
-      TetrisConsts.Y_INDEX
-      ];
+    const pixelsToPivot = tetrominoCoords[TetrominoManager.UPPER_Y_INDEX][
+      TetrominoManager.Y_INDEX];
     retGhostCorY = lowestY - 1 - pixelsToPivot;
 
     /* Since we might change the pivot for the tetrominos in the future,
@@ -287,10 +288,8 @@ export class TetrisBoard {
       the lowest Y we just found. We first try to go upwards (Y increases) */
     let upperBoundAttempts = 0;
 
-    while (
-      this.isTetrominoRenderable(false, corX, retGhostCorY + 1, tetromino,
-        tetrominoRotate)
-    ) {
+    while (this.isTetrominoRenderable(false, corX, retGhostCorY + 1,
+      type, rotation)) {
       retGhostCorY += 1;
       upperBoundAttempts += 1;
     }
@@ -302,12 +301,35 @@ export class TetrisBoard {
     }
 
     /* Otherwise, it is in the lower region */
-    while (!this.isTetrominoRenderable(false, corX, retGhostCorY, tetromino,
-      tetrominoRotate)) {
+    while (!this.isTetrominoRenderable(false, corX, retGhostCorY,
+      type, rotation)) {
       retGhostCorY -= 1;
     }
 
     return retGhostCorY;
+  }
+
+  /**
+   * @brief: prepareGhostTetrominoY: Get the center of rotation's ghost Y value
+   * of a newly spawned tetromino
+   * @note: This is basically a quick hack - Instead of having to
+   * call findGhostTetrominoY, we can simply just
+   * calculate the ghost tetromino's Y coordinate as it is only
+   * [the higest pixel - number of pixels to the pivot
+   * (0, 0) of the init tetromino]
+   * @param: type: Type of tetromino
+   * @param: rotation: Rotation of tetromino
+   * @return: Center of rotation's ghost Y value of a newly spawned tetromino
+   */
+  public prepareGhostTetrominoY(type: TetrominoManager.TetrominoType,
+    rotation: TetrominoManager.TetrominoRotation): number {
+    const tetrominoCoords =
+      TetrominoManager.TetrominoManager.getTetrominoCoords(type, rotation);
+
+    const pixelsToPivot =
+      tetrominoCoords[TetrominoManager.UPPER_Y_INDEX][TetrominoManager.Y_INDEX];
+
+    return this.boardHeight - 1 - pixelsToPivot;
   }
 }
 

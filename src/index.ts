@@ -1,23 +1,22 @@
 import { WebSocketServer } from "ws";
 
-import Tetris from "./core/tetris";
-import * as TetrisConsts from "./constants/tetris";
+import * as Tetris from "./core/tetris";
 
 const server = new WebSocketServer({ port: 8080 });
 
 server.on("connection", (socket) => {
-  const game = new Tetris();
+  const game = new Tetris.Tetris();
 
   /* Sends the initial game state on open */
-  let gameState = game.handleBoardUpdate();
+  let gameState = game.updateGameStates(undefined);
 
   socket.send(JSON.stringify(gameState));
-  
+
   /* Sends the updated game state after an interval */
   const gameTimeout = () => {
     if (gameState.gameOver) return;
 
-    gameState = game.handleBoardUpdate();
+    gameState = game.updateGameStates(Tetris.Command.Down);
 
     socket.send(JSON.stringify(gameState));
 
@@ -25,7 +24,7 @@ server.on("connection", (socket) => {
     setTimeout(gameTimeout, gameState.gameInterval);
   };
 
-  setTimeout(gameTimeout, TetrisConsts.DEFAULT_TIME_INTERVAL_MS)
+  setTimeout(gameTimeout, Tetris.DEFAULT_TIME_INTERVAL_MS)
 
   /* Sends the updated game state after registering an input */
   socket.on("message", (data) => {
