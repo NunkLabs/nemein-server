@@ -222,7 +222,7 @@ export class TetrominoManager {
       this.spawnedTetrominos.push(newTetromino);
     }
 
-    return this.activeTetromino;
+    return JSON.parse(JSON.stringify(this.activeTetromino));
   }
 
   /**
@@ -230,7 +230,7 @@ export class TetrominoManager {
    * @returns Current active Tetromino
    */
   public getActiveTetromino(): Tetromino {
-    return this.activeTetromino;
+    return JSON.parse(JSON.stringify(this.activeTetromino));
   }
 
   /**
@@ -249,7 +249,7 @@ export class TetrominoManager {
       }
       return ret;
     }
-    return this.spawnedTetrominos;
+    return JSON.parse(JSON.stringify(this.spawnedTetrominos));
   }
 
   /**
@@ -257,7 +257,7 @@ export class TetrominoManager {
    * @returns Current held Tetromino
    */
   public getHeldTetromino(): Tetromino {
-    return this.heldTetromino;
+    return JSON.parse(JSON.stringify(this.heldTetromino));
   }
 
   /**
