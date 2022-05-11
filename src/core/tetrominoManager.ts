@@ -112,6 +112,7 @@ export enum TetrominoType {
   Z,
   S,
   Ghost,
+  NumTetrominoTypes
 }
 
 export enum TetrominoRotation {
