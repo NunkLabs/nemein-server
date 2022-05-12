@@ -60,7 +60,7 @@ export class TetrisBoard {
   }
 
   /**
-   * @brief: setField: Set the current play field of thegame board
+   * @brief: setField: Set the current play field of the game board
    * @param field: Field to be set
    * @note: Only works when NODE_ENV === "test" (i.e. in a test env)
    */
