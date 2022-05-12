@@ -3,7 +3,7 @@ import {
   TetrisCol
 } from "./tetrisBoard";
 import {
-  MAX_ROTATE, X_INDEX, Y_INDEX, TetrominoType, TetrominoRotation,
+  X_INDEX, Y_INDEX, TetrominoType, TetrominoRotation,
   TetrominoManager, Tetromino
 } from "./tetrominoManager";
 
@@ -165,7 +165,8 @@ export class Tetris {
           }
           case Command.Rotate: {
             testRotate =
-              (activeTetromino.rotation + 1) % MAX_ROTATE;
+              (activeTetromino.rotation + 1)
+              % TetrominoRotation.NumTetrominoRotations;
 
             const testOffsetArr =
               TetrominoManager.getTetrominoWallKickOffsets(

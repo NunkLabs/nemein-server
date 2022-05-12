@@ -1,4 +1,5 @@
-import assert from "assert"
+import { assert } from "chai"
+
 import {
   DEFAULT_BOARD_WIDTH, DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
@@ -23,19 +24,23 @@ describe(`TetrisBoard`, () => {
       const testField: TetrisCol[] = testBoard.getField();
 
       it(`Should return a playfield with correct DEFAULT_BOARD_WIDTH`, () => {
-        assert.equal(testField.length, DEFAULT_BOARD_WIDTH);
+        assert.lengthOf(testField, DEFAULT_BOARD_WIDTH, `Width is not
+          ${DEFAULT_BOARD_WIDTH}`);
       });
 
       it(`Should return a playfield with correct DEFAULT_BOARD_HEIGHT`, () => {
         for (let x = 0; x < DEFAULT_BOARD_WIDTH; x += 1) {
-          assert.equal(testField[x].colArr.length, DEFAULT_BOARD_HEIGHT);
+          assert.lengthOf(testField[x].colArr, DEFAULT_BOARD_HEIGHT, `Col
+            ${x}'s length is not ${DEFAULT_BOARD_HEIGHT}`);
         }
       });
 
       it(`Should return a playfield with correct lowest y values for each
       column`, () => {
         for (let x = 0; x < DEFAULT_BOARD_WIDTH; x += 1) {
-          assert.equal(testField[x].lowestY, DEFAULT_BOARD_HEIGHT - 1);
+          assert.strictEqual(testField[x].lowestY, DEFAULT_BOARD_HEIGHT - 1,
+            `Col[${x}] does not have lowest y value of
+            ${DEFAULT_BOARD_HEIGHT - 1}`);
         }
       });
 
@@ -43,7 +48,8 @@ describe(`TetrisBoard`, () => {
         for (let x = 0; x < DEFAULT_BOARD_WIDTH; x += 1) {
           const col = testField[x].colArr;
           for (let y = 0; y < DEFAULT_BOARD_HEIGHT; y += 1) {
-            assert.equal(col[y], TetrominoType.Blank);
+            assert.strictEqual(col[y], TetrominoType.Blank, `Pixel ${x} on row
+            ${y} is not blank`);
           }
         }
       });
@@ -55,21 +61,23 @@ describe(`TetrisBoard`, () => {
       const testField = testBoard.getField();
 
       it(`Should return a playfield with correct input board width`, () => {
-        assert.equal(testField.length, DEFAULT_TEST_BOARD_WIDTH);
+        assert.lengthOf(testField, DEFAULT_TEST_BOARD_WIDTH, `Width is not
+        ${DEFAULT_TEST_BOARD_WIDTH}`);
       });
 
       it(`Should return a playfield with correct input board height`, () => {
         for (let x = 0; x < DEFAULT_TEST_BOARD_WIDTH; x += 1) {
-          assert.equal(testField[x].colArr.length,
-            DEFAULT_TEST_BOARD_HEIGHT);
+          assert.lengthOf(testField[x].colArr, DEFAULT_TEST_BOARD_HEIGHT,
+            `Col ${x}'s length is not ${DEFAULT_TEST_BOARD_HEIGHT}`);
         }
       });
 
       it(`Should return a playfield with correct lowest y values for each
       column`, () => {
         for (let x = 0; x < DEFAULT_TEST_BOARD_WIDTH; x += 1) {
-          assert.equal(testField[x].lowestY,
-            DEFAULT_TEST_BOARD_HEIGHT - 1);
+          assert.strictEqual(testField[x].lowestY,
+            DEFAULT_TEST_BOARD_HEIGHT - 1, `Col[${x}] does not have lowest y
+            value of ${DEFAULT_TEST_BOARD_HEIGHT - 1}`);
         }
       });
 
@@ -77,7 +85,8 @@ describe(`TetrisBoard`, () => {
         for (let x = 0; x < DEFAULT_TEST_BOARD_WIDTH; x += 1) {
           const col = testField[x].colArr;
           for (let y = 0; y < DEFAULT_TEST_BOARD_HEIGHT; y += 1) {
-            assert.equal(col[y], TetrominoType.Blank);
+            assert.strictEqual(col[y], TetrominoType.Blank, `Pixel ${x} on row ${y} is
+            not blank`);
           }
         }
       });
@@ -106,7 +115,8 @@ describe(`TetrisBoard`, () => {
       testBoard.setField(fieldToUpdate);
 
       it(`Should return the correct number of cleared lines`, () => {
-        assert.equal(testBoard.clearLines(), DEFAULT_TEST_NUM_CLEAR_LINES);
+        assert.strictEqual(testBoard.clearLines(), DEFAULT_TEST_NUM_CLEAR_LINES,
+          `Number of cleared lines is not ${DEFAULT_TEST_NUM_CLEAR_LINES}`);
       });
     });
 
@@ -129,9 +139,12 @@ describe(`TetrisBoard`, () => {
         DEFAULT_TEST_TETROMINO_TYPE, DEFAULT_TEST_TETROMINO_ROTATION);
       const testField = testBoard.getField();
       it(`Should update the correct lowest y values`, () => {
-        assert.equal(testField[testCorX].lowestY, testCorY - 1);
-        assert.equal(testField[testCorX - 1].lowestY, testCorY);
-        assert.equal(testField[testCorX + 1].lowestY, testCorY);
+        assert.strictEqual(testField[testCorX].lowestY, testCorY - 1, `Middle
+          lowest y value is not ${testCorY - 1}`);
+        assert.strictEqual(testField[testCorX - 1].lowestY, testCorY, `Left
+          lowest y value is not ${testCorY}`);
+        assert.strictEqual(testField[testCorX + 1].lowestY, testCorY, `Right
+          lowest y value is not ${testCorY}`);
       });
     });
 
@@ -161,8 +174,8 @@ describe(`TetrisBoard`, () => {
           DEFAULT_TEST_TETROMINO_TYPE,
           DEFAULT_TEST_TETROMINO_ROTATION, DEFAULT_TEST_TETROMINO_TYPE);
         it(`Should render correctly`, () => {
-          assert.deepEqual(testBitmap, TetrisBoard.tetrisColsToBitmap(
-            testBoard.getField()));
+          assert.deepStrictEqual(testBitmap, TetrisBoard.tetrisColsToBitmap(
+            testBoard.getField()), `Returned bitmap is incorrect`);
         });
       });
 
@@ -187,8 +200,8 @@ describe(`TetrisBoard`, () => {
           DEFAULT_TEST_TETROMINO_TYPE,
           DEFAULT_TEST_TETROMINO_ROTATION, DEFAULT_TEST_TETROMINO_TYPE);
         it(`Should render correctly`, () => {
-          assert.deepEqual(testBitmap, TetrisBoard.tetrisColsToBitmap(
-            testBoard.getField()));
+          assert.deepStrictEqual(testBitmap, TetrisBoard.tetrisColsToBitmap(
+            testBoard.getField()), `Returned bitmap is incorrect`);
         });
       });
     });
@@ -205,9 +218,10 @@ describe(`TetrisBoard`, () => {
           const testCorX = DEFAULT_TEST_BOARD_WIDTH / 2;
           const testCorY = 0;
           it(`Should be able to render`, () => {
-            assert.equal(true, testBoard.isTetrominoRenderable(true, testCorX,
+            assert.strictEqual(true, testBoard.isTetrominoRenderable(true, testCorX,
               testCorY, DEFAULT_TEST_TETROMINO_TYPE,
-              DEFAULT_TEST_TETROMINO_ROTATION));
+              DEFAULT_TEST_TETROMINO_ROTATION), `The Tetromino returned
+              non-renderable`);
           });
         });
 
@@ -231,9 +245,10 @@ describe(`TetrisBoard`, () => {
           testBoard.setField(TetrisBoard.bitmapToTetrisCols(testBitmap,
             DEFAULT_TEST_BOARD_WIDTH, DEFAULT_TEST_BOARD_HEIGHT));
           it(`Should not be able to render`, () => {
-            assert.equal(false, testBoard.isTetrominoRenderable(true, testCorX,
+            assert.strictEqual(false, testBoard.isTetrominoRenderable(true, testCorX,
               testCorY, DEFAULT_TEST_TETROMINO_TYPE,
-              DEFAULT_TEST_TETROMINO_ROTATION));
+              DEFAULT_TEST_TETROMINO_ROTATION), `The Tetromino returned
+              renderable`);
           });
         });
       });
@@ -249,9 +264,10 @@ describe(`TetrisBoard`, () => {
            */
           const testCorY = DEFAULT_TEST_BOARD_HEIGHT / 2;
           it(`Should be able to render`, () => {
-            assert.equal(true, testBoard.isTetrominoRenderable(false, testCorX,
+            assert.strictEqual(true, testBoard.isTetrominoRenderable(false, testCorX,
               testCorY, DEFAULT_TEST_TETROMINO_TYPE,
-              DEFAULT_TEST_TETROMINO_ROTATION));
+              DEFAULT_TEST_TETROMINO_ROTATION), `The Tetromino returned
+              non-renderable`);
           });
         });
 
@@ -275,9 +291,10 @@ describe(`TetrisBoard`, () => {
           testBoard.setField(TetrisBoard.bitmapToTetrisCols(testBitmap,
             DEFAULT_TEST_BOARD_WIDTH, DEFAULT_TEST_BOARD_HEIGHT));
           it(`Should not be able to render`, () => {
-            assert.equal(false, testBoard.isTetrominoRenderable(true, testCorX,
+            assert.strictEqual(false, testBoard.isTetrominoRenderable(true, testCorX,
               testCorY, DEFAULT_TEST_TETROMINO_TYPE,
-              DEFAULT_TEST_TETROMINO_ROTATION));
+              DEFAULT_TEST_TETROMINO_ROTATION), `The Tetromino returned
+              renderable`);
           });
         });
       });
@@ -307,15 +324,16 @@ describe(`TetrisBoard`, () => {
       testBoard.setField(TetrisBoard.bitmapToTetrisCols(testBitmap,
         DEFAULT_TEST_BOARD_WIDTH, DEFAULT_TEST_BOARD_HEIGHT));
       it(`Should find the ghost y value that is dictated by the lowest y
-      among the number of cols this tetromino spans`, () => {
+        among the number of cols this tetromino spans`, () => {
         /**
          * FIXME: The value again depends largely on the setup and the input
          * Tetromino. This test setup is arbitrarily created. We should find
          * another better way to extensively test this
          */
-        assert.equal(DEFAULT_TEST_BOARD_HEIGHT / 2,
+        assert.strictEqual(DEFAULT_TEST_BOARD_HEIGHT / 2,
           testBoard.findGhostTetrominoY(testCorX, testCorY,
-            DEFAULT_TEST_TETROMINO_TYPE, DEFAULT_TEST_TETROMINO_ROTATION));
+            DEFAULT_TEST_TETROMINO_TYPE, DEFAULT_TEST_TETROMINO_ROTATION),
+          `Ghost y value found is incorrect`);
       });
     });
 
@@ -324,11 +342,13 @@ describe(`TetrisBoard`, () => {
         DEFAULT_TEST_BOARD_HEIGHT);
       it(`Should find the ghost y value that is dictated by the lowest y
       among the number of cols this tetromino spans`, () => {
-        for (let type = 0; type < TetrominoType.NumTetrominoTypes; type += 1) {
+        for (let type = TetrominoType.Blank;
+          type < TetrominoType.NumTetrominoTypes; type += 1) {
           if (type !== TetrominoType.Ghost && type !== TetrominoType.Blank) {
             const prepGhostY = testBoard.prepareGhostTetrominoY(type,
               DEFAULT_TEST_TETROMINO_ROTATION);
-            assert.equal(DEFAULT_TEST_BOARD_HEIGHT - 1, prepGhostY);
+            assert.strictEqual(DEFAULT_TEST_BOARD_HEIGHT - 1, prepGhostY, `Ghost y
+            value prepared is incorrect`);
           }
         }
       });
