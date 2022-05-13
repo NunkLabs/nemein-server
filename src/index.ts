@@ -5,20 +5,24 @@ import { Command, Tetris } from "./core/tetris";
 const server = new WebSocketServer({ port: 8080 });
 
 server.on("connection", (socket) => {
-  const game = new Tetris();
-
   /* Sends the initial game state on open */
+  let active = true;
+  let game = new Tetris();
   let gameState = game.updateGameStates();
 
   socket.send(JSON.stringify(gameState));
 
   /* Sends the updated game state after an interval */
   const gameTimeout = () => {
-    if (gameState.gameOver) return;
+    if (active) {
+      gameState = game.updateGameStates(Command.Down);
 
-    gameState = game.updateGameStates(Command.Down);
+      socket.send(JSON.stringify(gameState));
 
-    socket.send(JSON.stringify(gameState));
+      if (gameState.gameOver) {
+        active = false;
+      }; 
+    }
 
     /* We use setTimeout recursively to simulate a dynamic interval */
     setTimeout(gameTimeout, gameState.gameInterval);
@@ -26,10 +30,29 @@ server.on("connection", (socket) => {
 
   setTimeout(gameTimeout, gameState.gameInterval)
 
-  /* Sends the updated game state after registering an input */
   socket.on("message", (data) => {
-    if (gameState.gameOver) return;
+    const input = data.toString();
 
-    socket.send(JSON.stringify(game.inputHandle(data.toString())));
+    switch (input) {
+      case "ToggleGame": {
+        active = !active;
+
+        break;
+      }
+      case "Restart": {
+        game = new Tetris();
+        gameState = game.updateGameStates();
+
+        socket.send(JSON.stringify(gameState));
+
+        break;
+      }
+      default: {
+        if (gameState.gameOver) return;
+
+        /* Sends the updated game state after registering an input */
+        socket.send(JSON.stringify(game.inputHandle(input)));
+      }
+    }
   });
 });
