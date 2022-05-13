@@ -3,7 +3,8 @@ import {
   TetrisCol
 } from "./tetrisBoard";
 import {
-  X_INDEX, Y_INDEX, TetrominoType, TetrominoRotation,
+  X_INDEX, Y_INDEX, DEFAULT_TEST_OVERWRITTEN_TETROMINO,
+  TetrominoType, TetrominoRotation,
   TetrominoManager, Tetromino
 } from "./tetrominoManager";
 
@@ -33,7 +34,7 @@ export enum Command {
   HoldTetromino,
 };
 
-type TetrisStates = {
+export type TetrisStates = {
   corX: number;
   corY: number;
   ghostCorY: number;
@@ -77,14 +78,15 @@ export class Tetris {
   private gameInterval: number;
 
   constructor (boardWidth: number = DEFAULT_BOARD_WIDTH,
-    boardHeight: number = DEFAULT_BOARD_HEIGHT) {
+    boardHeight: number = DEFAULT_BOARD_HEIGHT,
+    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO) {
     this.boardWidth = boardWidth;
     this.board = new TetrisBoard(boardWidth, boardHeight);
     this.onHold = false;
     this.corX = boardWidth / 2;
     this.corY = Y_START;
-    this.ghostCorY = 0;
-    this.tetrominoManager = new TetrominoManager();
+    this.ghostCorY = Y_START;
+    this.tetrominoManager = new TetrominoManager(dbgOverwrittenTetromino);
     this.initRender = true;
     this.gameOver = false;
     this.score = 0;
@@ -104,6 +106,61 @@ export class Tetris {
     const activeTetromino = this.tetrominoManager.getActiveTetromino();
     this.ghostCorY = this.board.prepareGhostTetrominoY(activeTetromino.type,
       activeTetromino.rotation);
+  }
+
+  /**
+   * @brief: handleBlockedMovement: Handler for blocked movements
+   */
+  private handleBlockedMovement(): void {
+    /* Update the lowest pixel for each column */
+    let activeTetromino = this.tetrominoManager.getActiveTetromino();
+    this.board.updateColLowestY(this.corX, this.corY, activeTetromino.type,
+      activeTetromino.rotation);
+
+    const numLinesCompleted = this.board.clearLines();
+
+    /* Prepare new tetromino for the next board update */
+    activeTetromino = this.tetrominoManager.getNewTetromino();
+    this.corX = Math.floor(this.boardWidth / 2);
+    this.corY = Y_START;
+    this.ghostCorY = this.board.findGhostTetrominoY(this.corX, this.corY,
+      activeTetromino.type, activeTetromino.rotation);
+    this.onHold = false;
+
+    /**
+     * Update score, tetrominos count, level and interval
+     *
+     * Updating scheme as follow:
+     *  - Tetromino count: Increases by 1
+     *  - Level: Increases by 1 after everytime the tetromino count is increased
+     *      by LEVEL_UP_TETROMINOS_COUNT
+     *  - Score: Increments with the current level
+     *  - Game interval: We calculate the amount of time to subtract from the
+     *      default game interval (DEFAULT_TIME_INTERVAL_MS) based on the
+     *      current level
+     */
+    this.tetrominosCount += 1;
+    /* TODO: Add a more complex scoring system */
+    this.level = 1 + Math.floor(this.tetrominosCount
+      / LEVEL_UP_TETROMINOS_COUNT);
+    this.score += numLinesCompleted * this.level;
+
+    let newGameIntervalDecrease = this.level * EARLY_LEVEL_MULTIPLIER;
+    if (newGameIntervalDecrease > INTERVAL_CAP) {
+      newGameIntervalDecrease = INTERVAL_CAP + this.level
+        * LATE_LEVEL_MULTIPLIER
+      if (newGameIntervalDecrease >= DEFAULT_TIME_INTERVAL_MS) {
+        newGameIntervalDecrease = DEFAULT_TIME_INTERVAL_MS;
+      }
+    }
+    this.gameInterval = DEFAULT_TIME_INTERVAL_MS
+      - newGameIntervalDecrease;
+
+    /* Check if game is over */
+    if (!this.board.isTetrominoRenderable(true, this.corX, this.corY,
+      activeTetromino.type, activeTetromino.rotation)) {
+      this.gameOver = true;
+    }
   }
 
   /**
@@ -294,61 +351,6 @@ export class Tetris {
         return this.updateGameStates(Command.HoldTetromino);
       default:
         return this.updateGameStates(Command.Down);
-    }
-  }
-
-  /**
-   * @brief: handleBlockedMovement: Handler for blocked movements
-   */
-  private handleBlockedMovement(): void {
-    /* Update the lowest pixel for each column */
-    let activeTetromino = this.tetrominoManager.getActiveTetromino();
-    this.board.updateColLowestY(this.corX, this.corY, activeTetromino.type,
-      activeTetromino.rotation);
-
-    const numLinesCompleted = this.board.clearLines();
-
-    /* Prepare new tetromino for the next board update */
-    activeTetromino = this.tetrominoManager.getNewTetromino();
-    this.corX = Math.floor(this.boardWidth / 2);
-    this.corY = Y_START;
-    this.ghostCorY = this.board.findGhostTetrominoY(this.corX, this.corY,
-      activeTetromino.type, activeTetromino.rotation);
-    this.onHold = false;
-
-    /**
-     * Update score, tetrominos count, level and interval
-     *
-     * Updating scheme as follow:
-     *  - Tetromino count: Increases by 1
-     *  - Level: Increases by 1 after everytime the tetromino count is increased
-     *      by LEVEL_UP_TETROMINOS_COUNT
-     *  - Score: Increments with the current level
-     *  - Game interval: We calculate the amount of time to subtract from the
-     *      default game interval (DEFAULT_TIME_INTERVAL_MS) based on the
-     *      current level
-     */
-    this.tetrominosCount += 1;
-    /* TODO: Add a more complex scoring system */
-    this.level = 1 + Math.floor(this.tetrominosCount
-      / LEVEL_UP_TETROMINOS_COUNT);
-    this.score += numLinesCompleted * this.level;
-
-    let newGameIntervalDecrease = this.level * EARLY_LEVEL_MULTIPLIER;
-    if (newGameIntervalDecrease > INTERVAL_CAP) {
-      newGameIntervalDecrease = INTERVAL_CAP + this.level
-        * LATE_LEVEL_MULTIPLIER
-      if (newGameIntervalDecrease >= DEFAULT_TIME_INTERVAL_MS) {
-        newGameIntervalDecrease = DEFAULT_TIME_INTERVAL_MS;
-      }
-    }
-    this.gameInterval = DEFAULT_TIME_INTERVAL_MS
-      - newGameIntervalDecrease;
-
-    /* Check if game is over */
-    if (!this.board.isTetrominoRenderable(true, this.corX, this.corY,
-      activeTetromino.type, activeTetromino.rotation)) {
-      this.gameOver = true;
     }
   }
 }

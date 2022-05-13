@@ -122,6 +122,11 @@ export enum TetrominoRotation {
   NumTetrominoRotations
 }
 
+export const DEFAULT_TEST_OVERWRITTEN_TETROMINO: Tetromino = {
+  type: TetrominoType.Blank,
+  rotation: TetrominoRotation.O,
+};
+
 /* Tetromino types */
 export type Tetromino = {
   type: TetrominoType;
@@ -135,7 +140,11 @@ export class TetrominoManager {
 
   private heldTetromino: Tetromino;
 
-  constructor () {
+  /* This only applies when we're in a test env */
+  private dbgOverwrittenTetromino: Tetromino;
+
+  constructor (
+    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO) {
     this.activeTetromino = {
       type: TetrominoType.Blank,
       rotation: TetrominoRotation.O,
@@ -145,6 +154,8 @@ export class TetrominoManager {
       type: TetrominoType.Blank,
       rotation: TetrominoRotation.O,
     };
+    this.dbgOverwrittenTetromino = dbgOverwrittenTetromino;
+
     this.initTetrominoManager();
   }
 
@@ -158,16 +169,32 @@ export class TetrominoManager {
      * as the game begins
      */
     for (let spawn = 0; spawn < MAX_SPAWNED_TETROMINOS + 1; spawn += 1) {
-      const spawnedTetrominoType = Math.floor(Math.random()
-        * (MAX_TETROMINO_INDEX - MIN_TETROMINO_INDEX + 1)) + 1;
-      const newTetromino: Tetromino = {
-        type: spawnedTetrominoType,
-        rotation: TetrominoRotation.O,
-      };
-      this.spawnedTetrominos.push(newTetromino);
+      this.addNewTetrominoToQueue();
     }
 
     this.getNewTetromino();
+  }
+
+  /**
+   * @brief: addNewTetrominoToQueue: Spawn and a new Tetromino to the spawned
+   * Tetrominos queue
+   * @note: We add in our desired overwritten Tetromino if we're overwritting
+   * with a valid Tetromino AND the env is test
+   */
+  private addNewTetrominoToQueue(): void {
+    let newTetromino: Tetromino;
+    if (this.dbgOverwrittenTetromino !== DEFAULT_TEST_OVERWRITTEN_TETROMINO
+      && process.env.NODE_ENV === "test") {
+      newTetromino = this.dbgOverwrittenTetromino;
+    } else {
+      const spawnedTetrominoType = Math.floor(Math.random()
+        * (MAX_TETROMINO_INDEX - MIN_TETROMINO_INDEX + 1)) + 1;
+      newTetromino = {
+        type: spawnedTetrominoType,
+        rotation: TetrominoRotation.O,
+      };
+    }
+    this.spawnedTetrominos.push(newTetromino);
   }
 
   /**
@@ -214,13 +241,7 @@ export class TetrominoManager {
     /* Add a new Tetromino to spawned tetrominos queue if size is less than max
     size */
     if (this.spawnedTetrominos.length < MAX_SPAWNED_TETROMINOS) {
-      const spawnedTetrominoType = Math.floor(Math.random()
-        * (MAX_TETROMINO_INDEX - MIN_TETROMINO_INDEX + 1)) + 1;
-      const newTetromino: Tetromino = {
-        type: spawnedTetrominoType,
-        rotation: TetrominoRotation.O,
-      };
-      this.spawnedTetrominos.push(newTetromino);
+      this.addNewTetrominoToQueue();
     }
 
     return JSON.parse(JSON.stringify(this.activeTetromino));
