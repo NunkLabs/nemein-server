@@ -25,78 +25,254 @@ const TETROMINOS_COORDS_ARR = [
    */
   [
     /* Blank */
-    [[0, 0], [0, 0], [0, 0], [0, 0],],
-    [[0, 0], [0, 0], [0, 0], [0, 0],],
-    [[0, 0], [0, 0], [0, 0], [0, 0],],
-    [[0, 0], [0, 0], [0, 0], [0, 0],],
+    [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+    ],
+    [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+    ],
+    [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+    ],
+    [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+    ],
   ],
   [
     /* 2x2 square tetromino */
-    [[0, -1], [1, 0], [0, 0], [1, -1],],
-    [[0, 0], [1, 1], [0, 1], [1, 0],],
-    [[-1, 0], [0, 1], [-1, 1], [0, 0],],
-    [[-1, -1], [0, 0], [-1, 0], [0, -1],],
+    [
+      [0, -1],
+      [1, 0],
+      [0, 0],
+      [1, -1],
+    ],
+    [
+      [0, 0],
+      [1, 1],
+      [0, 1],
+      [1, 0],
+    ],
+    [
+      [-1, 0],
+      [0, 1],
+      [-1, 1],
+      [0, 0],
+    ],
+    [
+      [-1, -1],
+      [0, 0],
+      [-1, 0],
+      [0, -1],
+    ],
   ],
   [
     /* I tetromino */
-    [[1, 0], [0, 0], [-1, 0], [2, 0],],
-    [[0, -1], [0, 2], [0, 0], [0, 1],],
-    [[-1, 0], [0, 0], [-2, 0], [1, 0],],
-    [[0, -2], [0, 1], [0, 0], [0, -1],],
+    [
+      [1, 0],
+      [0, 0],
+      [-1, 0],
+      [2, 0],
+    ],
+    [
+      [0, -1],
+      [0, 2],
+      [0, 0],
+      [0, 1],
+    ],
+    [
+      [-1, 0],
+      [0, 0],
+      [-2, 0],
+      [1, 0],
+    ],
+    [
+      [0, -2],
+      [0, 1],
+      [0, 0],
+      [0, -1],
+    ],
   ],
   [
     /* T tetromino */
-    [[0, -1], [0, 0], [-1, 0], [1, 0],],
-    [[0, -1], [0, 1], [0, 0], [1, 0],],
-    [[0, 0], [0, 1], [-1, 0], [1, 0],],
-    [[0, -1], [0, 1], [-1, 0], [0, 0],],
+    [
+      [0, -1],
+      [0, 0],
+      [-1, 0],
+      [1, 0],
+    ],
+    [
+      [0, -1],
+      [0, 1],
+      [0, 0],
+      [1, 0],
+    ],
+    [
+      [0, 0],
+      [0, 1],
+      [-1, 0],
+      [1, 0],
+    ],
+    [
+      [0, -1],
+      [0, 1],
+      [-1, 0],
+      [0, 0],
+    ],
   ],
   [
     /* J tetromino */
-    [[-1, -1], [0, 0], [-1, 0], [1, 0],],
-    [[0, -1], [0, 1], [0, 0], [1, -1],],
-    [[0, 0], [1, 1], [-1, 0], [1, 0],],
-    [[0, -1], [0, 1], [-1, 1], [0, 0],],
+    [
+      [-1, -1],
+      [0, 0],
+      [-1, 0],
+      [1, 0],
+    ],
+    [
+      [0, -1],
+      [0, 1],
+      [0, 0],
+      [1, -1],
+    ],
+    [
+      [0, 0],
+      [1, 1],
+      [-1, 0],
+      [1, 0],
+    ],
+    [
+      [0, -1],
+      [0, 1],
+      [-1, 1],
+      [0, 0],
+    ],
   ],
   [
     /* L tetromino */
-    [[1, -1], [0, 0], [-1, 0], [1, 0],],
-    [[0, -1], [0, 1], [0, 0], [1, 1],],
-    [[0, 0], [-1, 1], [-1, 0], [1, 0],],
-    [[0, -1], [0, 1], [-1, -1], [0, 0],],
+    [
+      [1, -1],
+      [0, 0],
+      [-1, 0],
+      [1, 0],
+    ],
+    [
+      [0, -1],
+      [0, 1],
+      [0, 0],
+      [1, 1],
+    ],
+    [
+      [0, 0],
+      [-1, 1],
+      [-1, 0],
+      [1, 0],
+    ],
+    [
+      [0, -1],
+      [0, 1],
+      [-1, -1],
+      [0, 0],
+    ],
   ],
   [
     /* Z tetromino */
-    [[0, -1], [0, 0], [-1, -1], [1, 0],],
-    [[1, -1], [0, 1], [0, 0], [1, 0],],
-    [[0, 0], [0, 1], [-1, 0], [1, 1],],
-    [[0, -1], [-1, 1], [-1, 0], [0, 0],],
+    [
+      [0, -1],
+      [0, 0],
+      [-1, -1],
+      [1, 0],
+    ],
+    [
+      [1, -1],
+      [0, 1],
+      [0, 0],
+      [1, 0],
+    ],
+    [
+      [0, 0],
+      [0, 1],
+      [-1, 0],
+      [1, 1],
+    ],
+    [
+      [0, -1],
+      [-1, 1],
+      [-1, 0],
+      [0, 0],
+    ],
   ],
   [
     /* S tetromino */
-    [[0, -1], [0, 0], [-1, 0], [1, -1],],
-    [[0, -1], [1, 1], [0, 0], [1, 0],],
-    [[0, 0], [0, 1], [-1, 1], [1, 0],],
-    [[-1, -1], [0, 1], [-1, 0], [0, 0],],
+    [
+      [0, -1],
+      [0, 0],
+      [-1, 0],
+      [1, -1],
+    ],
+    [
+      [0, -1],
+      [1, 1],
+      [0, 0],
+      [1, 0],
+    ],
+    [
+      [0, 0],
+      [0, 1],
+      [-1, 1],
+      [1, 0],
+    ],
+    [
+      [-1, -1],
+      [0, 1],
+      [-1, 0],
+      [0, 0],
+    ],
   ],
 ];
 
 const WALL_KICK_COR_OFFSETS = [
   /* O --> R */
   [
-    [0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2],
+    [0, 0],
+    [-1, 0],
+    [-1, -1],
+    [0, 2],
+    [-1, 2],
   ],
   /* R --> Z */
   [
-    [0, 0], [1, 0], [1, 1], [0, -2], [1, -2],
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, -2],
+    [1, -2],
   ],
   /* Z --> L */
   [
-    [0, 0], [1, 0], [1, -1], [0, 2], [1, 2],
+    [0, 0],
+    [1, 0],
+    [1, -1],
+    [0, 2],
+    [1, 2],
   ],
   /* L --> O */
   [
-    [0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2],
+    [0, 0],
+    [-1, 0],
+    [-1, 1],
+    [0, -2],
+    [-1, -2],
   ],
 ];
 
@@ -111,7 +287,7 @@ export enum TetrominoType {
   Z,
   S,
   Ghost,
-  NumTetrominoTypes
+  NumTetrominoTypes,
 }
 
 export enum TetrominoRotation {
@@ -119,7 +295,7 @@ export enum TetrominoRotation {
   R,
   Z,
   L,
-  NumTetrominoRotations
+  NumTetrominoRotations,
 }
 
 export const DEFAULT_TEST_OVERWRITTEN_TETROMINO: Tetromino = {
@@ -131,7 +307,7 @@ export const DEFAULT_TEST_OVERWRITTEN_TETROMINO: Tetromino = {
 export type Tetromino = {
   type: TetrominoType;
   rotation: TetrominoRotation;
-}
+};
 
 export class TetrominoManager {
   private activeTetromino: Tetromino;
@@ -143,8 +319,9 @@ export class TetrominoManager {
   /* This only applies when we're in a test env */
   private dbgOverwrittenTetromino: Tetromino;
 
-  constructor (
-    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO) {
+  constructor(
+    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO
+  ) {
     this.activeTetromino = {
       type: TetrominoType.Blank,
       rotation: TetrominoRotation.O,
@@ -183,12 +360,16 @@ export class TetrominoManager {
    */
   private addNewTetrominoToQueue(): void {
     let newTetromino: Tetromino;
-    if (this.dbgOverwrittenTetromino !== DEFAULT_TEST_OVERWRITTEN_TETROMINO
-      && process.env.NODE_ENV === "test") {
+    if (
+      this.dbgOverwrittenTetromino !== DEFAULT_TEST_OVERWRITTEN_TETROMINO &&
+      process.env.NODE_ENV === "test"
+    ) {
       newTetromino = this.dbgOverwrittenTetromino;
     } else {
-      const spawnedTetrominoType = Math.floor(Math.random()
-        * (MAX_TETROMINO_INDEX - MIN_TETROMINO_INDEX + 1)) + 1;
+      const spawnedTetrominoType =
+        Math.floor(
+          Math.random() * (MAX_TETROMINO_INDEX - MIN_TETROMINO_INDEX + 1)
+        ) + 1;
       newTetromino = {
         type: spawnedTetrominoType,
         rotation: TetrominoRotation.O,
@@ -261,12 +442,16 @@ export class TetrominoManager {
    * types
    * @returns Current spawned Tetrominos queue
    */
-  public getSpawnedTetrominos(onlyTypeNeeded: boolean)
-    : Tetromino[] | TetrominoType[] {
+  public getSpawnedTetrominos(
+    onlyTypeNeeded: boolean
+  ): Tetromino[] | TetrominoType[] {
     if (onlyTypeNeeded) {
-      const ret: TetrominoType[] = []
-      for (let tetrominoIdx = 0; tetrominoIdx < MAX_SPAWNED_TETROMINOS;
-        tetrominoIdx += 1) {
+      const ret: TetrominoType[] = [];
+      for (
+        let tetrominoIdx = 0;
+        tetrominoIdx < MAX_SPAWNED_TETROMINOS;
+        tetrominoIdx += 1
+      ) {
         ret.push(this.spawnedTetrominos[tetrominoIdx].type);
       }
       return ret;
@@ -288,8 +473,10 @@ export class TetrominoManager {
    * @param rotation: Rotation of Tetromino
    * @returns: Array of coordinates of the input Tetromino
    */
-  static getTetrominoCoords(type: TetrominoType,
-    rotation: TetrominoRotation): number[][] {
+  static getTetrominoCoords(
+    type: TetrominoType,
+    rotation: TetrominoRotation
+  ): number[][] {
     return TETROMINOS_COORDS_ARR[type][rotation];
   }
 
@@ -300,14 +487,15 @@ export class TetrominoManager {
    * @param rotation: Rotation of Tetromino
    * @returns: Array of coordinates of the wall kick offset to be tested
    */
-  static getTetrominoWallKickOffsets(type: TetrominoType,
-    rotation: TetrominoRotation): number[][] {
+  static getTetrominoWallKickOffsets(
+    type: TetrominoType,
+    rotation: TetrominoRotation
+  ): number[][] {
     const ret = WALL_KICK_COR_OFFSETS[rotation];
     if (type === TetrominoType.T) {
       if (rotation === TetrominoRotation.O) {
         ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
-      }
-      else if (rotation === TetrominoRotation.Z) {
+      } else if (rotation === TetrominoRotation.Z) {
         ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX, 1);
       }
     }

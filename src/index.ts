@@ -24,7 +24,7 @@ server.on("connection", (socket) => {
     setTimeout(gameTimeout, gameState.gameInterval);
   };
 
-  setTimeout(gameTimeout, gameState.gameInterval)
+  setTimeout(gameTimeout, gameState.gameInterval);
 
   /* Sends the updated game state after registering an input */
   socket.on("message", (data) => {
