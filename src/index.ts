@@ -28,7 +28,7 @@ server.on("connection", (socket) => {
     setTimeout(gameTimeout, gameState.gameInterval);
   };
 
-  setTimeout(gameTimeout, gameState.gameInterval)
+  setTimeout(gameTimeout, gameState.gameInterval);
 
   socket.on("message", (data) => {
     const input = data.toString();
