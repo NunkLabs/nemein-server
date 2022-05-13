@@ -1,10 +1,10 @@
-name: Main
+name: Tests
 
 on: [push, pull_request]
 
 jobs:
   lint:
-    name: ESLint
+    name: Lint & test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -23,3 +23,6 @@ jobs:
 
       - name: Run ESLint
         run: yarn lint
+
+      - name: Run Tests
+        run: yarn test
