@@ -355,6 +355,8 @@ export class TetrisBoard {
    * @param boardWidth: Width of bitmap
    * @param boardHeight: Height of bitmap
    * @returns TetrisCol conversion of the bitmap
+   * @note: The method assumes everything is settled, i.e. the lowest y values
+   * will be different from what we expect
    */
   static bitmapToTetrisCols(bitmap: number[], boardWidth: number,
     boardHeight: number): TetrisCol[] {
