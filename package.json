@@ -7,6 +7,7 @@
     "dev": "concurrently --kill-others \"tsc -w\" \"nodemon dist/index.js\"",
     "format": "yarn lint && yarn prettier --write .",
     "lint": "eslint . --fix --ext .js,.ts",
+    "prepare": "husky install",
     "start": "tsc && node dist/index.js",
     "test": "NODE_ENV=test mocha -r ts-node/register test/*.ts",
     "update": "yarn upgrade-interactive --latest"
@@ -34,6 +35,7 @@
     "prettier": "^2.6.2",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4",
-    "typings": "^2.1.1"
+    "typings": "^2.1.1",
+    "husky": "^8.0.0"
   }
 }
