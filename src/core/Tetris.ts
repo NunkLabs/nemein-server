@@ -4,7 +4,7 @@ import {
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
   TetrisCol,
-} from "./tetrisBoard";
+} from "./TetrisBoard";
 import {
   X_INDEX,
   Y_INDEX,
@@ -13,7 +13,7 @@ import {
   TetrominoRotation,
   TetrominoManager,
   Tetromino,
-} from "./tetrominoManager";
+} from "./TetrominoManager";
 
 /* Keyboard event consts */
 export const ARROW_DOWN = "ArrowDown";

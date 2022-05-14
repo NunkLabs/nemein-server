@@ -6,7 +6,7 @@ import {
   Tetromino,
   TetrominoRotation,
   TetrominoType,
-} from "../core/tetrominoManager";
+} from "../src/core/TetrominoManager";
 
 describe("TetrominoManager", () => {
   describe("Test initilization", () => {

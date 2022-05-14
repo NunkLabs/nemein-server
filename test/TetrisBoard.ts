@@ -5,9 +5,9 @@ import {
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
   TetrisCol,
-} from "../core/tetrisBoard";
+} from "../src/core/TetrisBoard";
 
-import { TetrominoRotation, TetrominoType } from "../core/tetrominoManager";
+import { TetrominoRotation, TetrominoType } from "../src/core/TetrominoManager";
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;

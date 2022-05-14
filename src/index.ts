@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 
-import { Command, Tetris } from "./core/tetris";
+import { Command, Tetris } from "./core/Tetris";
 
 const server = new WebSocketServer({ port: 8080 });
 
@@ -21,7 +21,7 @@ server.on("connection", (socket) => {
 
       if (gameState.gameOver) {
         active = false;
-      }; 
+      }
     }
 
     /* We use setTimeout recursively to simulate a dynamic interval */
