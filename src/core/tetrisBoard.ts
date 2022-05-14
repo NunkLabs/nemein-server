@@ -10,8 +10,8 @@ import {
 /* Misc consts */
 export const Y_START = 0;
 export const MAX_PIXEL = 4;
-export const DEFAULT_BOARD_WIDTH = 14;
-export const DEFAULT_BOARD_HEIGHT = 23;
+export const DEFAULT_BOARD_WIDTH = 10;
+export const DEFAULT_BOARD_HEIGHT = 20;
 
 /* Enum types */
 export type TetrisCol = {
