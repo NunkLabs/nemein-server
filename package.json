@@ -8,7 +8,7 @@
     "format": "yarn lint && yarn prettier --write .",
     "lint": "eslint . --fix --ext .js,.ts",
     "start": "tsc && node dist/index.js",
-    "test": "NODE_ENV=test mocha -r ts-node/register src/tests/*.ts",
+    "test": "NODE_ENV=test mocha -r ts-node/register test/*.ts",
     "update": "yarn upgrade-interactive --latest"
   },
   "dependencies": {

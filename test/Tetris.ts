@@ -12,15 +12,15 @@ import {
   DEFAULT_TIME_INTERVAL_MS,
   Tetris,
   TetrisStates,
-} from "../core/tetris";
+} from "../src/core/Tetris";
 
-import { TetrisBoard } from "../core/tetrisBoard";
+import { TetrisBoard } from "../src/core/TetrisBoard";
 
 import {
   Tetromino,
   TetrominoRotation,
   TetrominoType,
-} from "../core/tetrominoManager";
+} from "../src/core/TetrominoManager";
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;
