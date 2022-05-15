@@ -2,6 +2,9 @@ import { assert } from "chai";
 
 import {
   MAX_SPAWNED_TETROMINOS,
+  WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX,
+  WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX,
+  WALL_KICK_COR_OFFSETS,
   TetrominoManager,
   Tetromino,
   TetrominoRotation,
@@ -18,7 +21,7 @@ describe("TetrominoManager", () => {
     it("Should return a valid active Tetromino", () => {
       assert.isTrue(
         testActiveTetromino.type !== TetrominoType.Blank &&
-          testActiveTetromino.type !== TetrominoType.Ghost,
+        testActiveTetromino.type !== TetrominoType.Ghost,
         "Active Tetromino's type is invalid"
       );
       assert.strictEqual(
@@ -77,7 +80,7 @@ describe("TetrominoManager", () => {
         it("Should correctly swap the held & active Tetrominos", () => {
           assert.isTrue(
             testHeldTetromino.type !== TetrominoType.Blank &&
-              testHeldTetromino.type !== TetrominoType.Ghost,
+            testHeldTetromino.type !== TetrominoType.Ghost,
             "Held Tetromino is not correctly swapped"
           );
           assert.notDeepEqual(
@@ -141,6 +144,58 @@ describe("TetrominoManager", () => {
           "Spawned Tetrominos length is not prevserved"
         );
       });
+    });
+
+    describe("Test getting wall kick offsets", () => {
+      for (let type = TetrominoType.Blank; type <
+        TetrominoType.NumTetrominoTypes; type += 1) {
+        for (let rotation = TetrominoRotation.O;
+          rotation < TetrominoRotation.NumTetrominoRotations;
+          rotation += 1) {
+          const offsets = TetrominoManager.getTetrominoWallKickOffsets(type,
+            rotation);
+          switch (type) {
+            case TetrominoType.Square:
+            /* Fallthrough */
+            case TetrominoType.I:
+            /* Fallthrough */
+            case TetrominoType.J:
+            /* Fallthrough */
+            case TetrominoType.L:
+            /* Fallthrough */
+            case TetrominoType.Z:
+            /* Fallthrough */
+            case TetrominoType.S:
+              assert.deepStrictEqual(offsets, WALL_KICK_COR_OFFSETS[rotation],
+                `Wall kick offset of type: ${type}}, rotation: ${rotation}
+                not correct`);
+              break;
+            case TetrominoType.T:
+              if (rotation === TetrominoRotation.O) {
+                const refOffsets = JSON.parse(JSON.stringify
+                  (WALL_KICK_COR_OFFSETS[rotation]));
+                refOffsets.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
+                assert.deepStrictEqual(offsets, refOffsets,
+                  `Wall kick offset of type: ${type}}, rotation: ${rotation}
+                  not correct`);
+              } else if (rotation === TetrominoRotation.Z) {
+                const refOffsets = JSON.parse(JSON.stringify
+                  (WALL_KICK_COR_OFFSETS[rotation]));
+                refOffsets.splice(WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX, 1);
+                assert.deepStrictEqual(offsets, refOffsets,
+                  `Wall kick offset of type: ${type}}, rotation: ${rotation}
+                  not correct`);
+              }
+              break;
+            case TetrominoType.Ghost:
+            case TetrominoType.Blank:
+            default:
+              assert.isEmpty(offsets, `Expecting offsets of type ${type} to be
+                empty`);
+              break;
+          }
+        }
+      }
     });
   });
 });

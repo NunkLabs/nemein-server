@@ -8,11 +8,46 @@ export const LOWER_X_INDEX = 2;
 
 /* Misc consts */
 export const MAX_SPAWNED_TETROMINOS = 6;
+export const WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX = 3;
+export const WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX = 2;
+
+export const WALL_KICK_COR_OFFSETS = [
+  /* O --> R */
+  [
+    [0, 0],
+    [-1, 0],
+    [-1, -1],
+    [0, 2],
+    [-1, 2],
+  ],
+  /* R --> Z */
+  [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, -2],
+    [1, -2],
+  ],
+  /* Z --> L */
+  [
+    [0, 0],
+    [1, 0],
+    [1, -1],
+    [0, 2],
+    [1, 2],
+  ],
+  /* L --> O */
+  [
+    [0, 0],
+    [-1, 0],
+    [-1, 1],
+    [0, -2],
+    [-1, -2],
+  ],
+];
 
 const MAX_TETROMINO_INDEX = 7;
 const MIN_TETROMINO_INDEX = 1;
-const WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX = 3;
-const WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX = 2;
 
 /* Tetromino const arrays */
 const TETROMINOS_COORDS_ARR = [
@@ -241,41 +276,6 @@ const TETROMINOS_COORDS_ARR = [
   ],
 ];
 
-const WALL_KICK_COR_OFFSETS = [
-  /* O --> R */
-  [
-    [0, 0],
-    [-1, 0],
-    [-1, -1],
-    [0, 2],
-    [-1, 2],
-  ],
-  /* R --> Z */
-  [
-    [0, 0],
-    [1, 0],
-    [1, 1],
-    [0, -2],
-    [1, -2],
-  ],
-  /* Z --> L */
-  [
-    [0, 0],
-    [1, 0],
-    [1, -1],
-    [0, 2],
-    [1, 2],
-  ],
-  /* L --> O */
-  [
-    [0, 0],
-    [-1, 0],
-    [-1, 1],
-    [0, -2],
-    [-1, -2],
-  ],
-];
-
 /* Enum types */
 export enum TetrominoType {
   Blank,
@@ -491,15 +491,17 @@ export class TetrominoManager {
     type: TetrominoType,
     rotation: TetrominoRotation
   ): number[][] {
-    const ret = WALL_KICK_COR_OFFSETS[rotation];
-    if (type === TetrominoType.T) {
-      if (rotation === TetrominoRotation.O) {
-        ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
-      } else if (rotation === TetrominoRotation.Z) {
-        ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX, 1);
+    let ret = [];
+    if (type < TetrominoType.Ghost && type !== TetrominoType.Blank) {
+      ret = JSON.parse(JSON.stringify(WALL_KICK_COR_OFFSETS[rotation]));
+      if (type === TetrominoType.T) {
+        if (rotation === TetrominoRotation.O) {
+          ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
+        } else if (rotation === TetrominoRotation.Z) {
+          ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX, 1);
+        }
       }
     }
-
     return ret;
   }
 }
