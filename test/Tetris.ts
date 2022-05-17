@@ -9,9 +9,21 @@ import {
   ARROW_UP,
   SPACE,
   C_KEY,
+  NUMPAD_2,
+  NUMPAD_6,
+  NUMPAD_4,
+  NUMPAD_1,
+  NUMPAD_5,
+  NUMPAD_9,
+  NUMPAD_8,
+  SHIFT,
+  NUMPAD_0,
+  NUMPAD_7,
+  CTRL,
+  NUMPAD_3,
+  Z_KEY,
   DEFAULT_TIME_INTERVAL_MS,
   Tetris,
-  TetrisStates,
 } from "../src/core/Tetris";
 
 import { TetrisBoard } from "../src/core/TetrisBoard";
@@ -24,6 +36,7 @@ import {
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;
+const DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS = 2
 
 describe("Tetris", () => {
   describe(`Test initilization`, () => {
@@ -63,171 +76,270 @@ describe("Tetris", () => {
         type: TetrominoType.T,
         rotation: TetrominoRotation.O,
       };
-      const testTetris = new Tetris(
-        DEFAULT_TEST_BOARD_WIDTH,
-        DEFAULT_TEST_BOARD_HEIGHT,
-        testOverwrittenTetromino
-      );
-      let testGameStates: TetrisStates;
-      let testBitmap: number[] = [];
 
-      step("Should correctly render init on first ARROW_DOWN input", () => {
-        testGameStates = testTetris.inputHandle(ARROW_DOWN);
-        // prettier-ignore
-        testBitmap = [
-          0, 0, 3, 3, 3, 0,
-          0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0,
-          0, 0, 0, 8, 0, 0,
-          0, 0, 8, 8, 8, 0,
-        ];
-        assert.deepStrictEqual(
-          TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-          testBitmap,
-          "Bitmap incorrect"
-        );
+      step("Should correctly render on down input", () => {
+        const testCommands = [ARROW_DOWN, NUMPAD_2];
+        testCommands.forEach(command => {
+          const testTetris = new Tetris(
+            DEFAULT_TEST_BOARD_WIDTH,
+            DEFAULT_TEST_BOARD_HEIGHT,
+            testOverwrittenTetromino
+          );
+          /* Init command */
+          let testGameStates = testTetris.inputHandle(command);
+          // prettier-ignore
+          let testBitmap = [
+            0, 0, 3, 3, 3, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 8, 0, 0,
+            0, 0, 8, 8, 8, 0,
+          ];
+          assert.deepStrictEqual(
+            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+            testBitmap,
+            `Bitmap incorrect on command ${command} (first)`
+          );
+
+          /* Actual down command */
+          testGameStates = testTetris.inputHandle(command);
+          // prettier-ignore
+          testBitmap = [
+            0, 0, 0, 3, 0, 0,
+            0, 0, 3, 3, 3, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 8, 0, 0,
+            0, 0, 8, 8, 8, 0,
+          ];
+          assert.deepStrictEqual(
+            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+            testBitmap,
+            `Bitmap incorrect on command ${command} (second)`
+          );
+        });
       });
 
       step(
-        `Should correctly render active Tetromino down 1 unit on the next
-        ARROW_DOWN inputs`,
+        "Should correctly render active Tetromino right 1 unit",
         () => {
-          testGameStates = testTetris.inputHandle(ARROW_DOWN);
-          // prettier-ignore
-          testBitmap = [
-            0, 0, 0, 3, 0, 0,
-            0, 0, 3, 3, 3, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 8, 0, 0,
-            0, 0, 8, 8, 8, 0,
-          ];
-          assert.deepStrictEqual(
-            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-            testBitmap,
-            "Bitmap incorrect"
-          );
+          const testCommands = [ARROW_RIGHT, NUMPAD_6];
+          testCommands.forEach(command => {
+            const testTetris = new Tetris(
+              DEFAULT_TEST_BOARD_WIDTH,
+              DEFAULT_TEST_BOARD_HEIGHT,
+              testOverwrittenTetromino
+            );
+            for (let numRuns = 0;
+              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+              numRuns += 1) {
+              testTetris.inputHandle(ARROW_DOWN);
+            }
+            const testGameStates = testTetris.inputHandle(command);
+            // prettier-ignore
+            const testBitmap = [
+              0, 0, 0, 0, 3, 0,
+              0, 0, 0, 3, 3, 3,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 8, 0,
+              0, 0, 0, 8, 8, 8,
+            ];
+            assert.deepStrictEqual(
+              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+              testBitmap,
+              `Bitmap incorrect on command ${command}`
+            );
+          });
+        }
+
+      );
+
+      step(
+        "Should correctly render active Tetromino left 1 unit",
+        () => {
+          const testCommands = [ARROW_LEFT, NUMPAD_4];
+          testCommands.forEach(command => {
+            const testTetris = new Tetris(
+              DEFAULT_TEST_BOARD_WIDTH,
+              DEFAULT_TEST_BOARD_HEIGHT,
+              testOverwrittenTetromino
+            );
+            for (let numRuns = 0;
+              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+              numRuns += 1) {
+              testTetris.inputHandle(ARROW_DOWN);
+            }
+            const testGameStates = testTetris.inputHandle(command);
+            // prettier-ignore
+            const testBitmap = [
+              0, 0, 3, 0, 0, 0,
+              0, 3, 3, 3, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 8, 0, 0, 0,
+              0, 8, 8, 8, 0, 0,
+            ];
+            assert.deepStrictEqual(
+              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+              testBitmap,
+              `Bitmap incorrect on command ${command}`
+            );
+          });
         }
       );
 
       step(
-        `Should correctly render active Tetromino right 1 unit on the next
-        ARROW_RIGHT inputs`,
+        "Should correctly render active Tetromino rotated once clockwised",
         () => {
-          testGameStates = testTetris.inputHandle(ARROW_RIGHT);
-          // prettier-ignore
-          testBitmap = [
-            0, 0, 0, 0, 3, 0,
-            0, 0, 0, 3, 3, 3,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 8, 0,
-            0, 0, 0, 8, 8, 8,
-          ];
-          assert.deepStrictEqual(
-            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-            testBitmap,
-            "Bitmap incorrect"
-          );
+          const testCommands = [ARROW_UP, NUMPAD_1, NUMPAD_5, NUMPAD_9];
+          testCommands.forEach(command => {
+            const testTetris = new Tetris(
+              DEFAULT_TEST_BOARD_WIDTH,
+              DEFAULT_TEST_BOARD_HEIGHT,
+              testOverwrittenTetromino
+            );
+            for (let numRuns = 0;
+              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+              numRuns += 1) {
+              testTetris.inputHandle(ARROW_DOWN);
+            }
+            const testGameStates = testTetris.inputHandle(command);
+            // prettier-ignore
+            const testBitmap = [
+              0, 0, 0, 3, 0, 0,
+              0, 0, 0, 3, 3, 0,
+              0, 0, 0, 3, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 8, 0, 0,
+              0, 0, 0, 8, 8, 0,
+              0, 0, 0, 8, 0, 0,
+            ];
+            assert.deepStrictEqual(
+              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+              testBitmap,
+              `Bitmap incorrect on command ${command}`
+            );
+          });
         }
       );
 
       step(
-        `Should correctly render active Tetromino down 1 unit on the next
-        ARROW_LEFT inputs`,
+        "Should correctly render active Tetromino rotated once counterclockwised",
         () => {
-          testGameStates = testTetris.inputHandle(ARROW_LEFT);
-          // prettier-ignore
-          testBitmap = [
-            0, 0, 0, 3, 0, 0,
-            0, 0, 3, 3, 3, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 8, 0, 0,
-            0, 0, 8, 8, 8, 0,
-          ];
-          assert.deepStrictEqual(
-            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-            testBitmap
-          );
+          const testCommands = [CTRL, Z_KEY, NUMPAD_3, NUMPAD_7];
+          testCommands.forEach(command => {
+            const testTetris = new Tetris(
+              DEFAULT_TEST_BOARD_WIDTH,
+              DEFAULT_TEST_BOARD_HEIGHT,
+              testOverwrittenTetromino
+            );
+            for (let numRuns = 0;
+              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+              numRuns += 1) {
+              testTetris.inputHandle(ARROW_DOWN);
+            }
+            const testGameStates = testTetris.inputHandle(command);
+            // prettier-ignore
+            const testBitmap = [
+              0, 0, 0, 3, 0, 0,
+              0, 0, 3, 3, 0, 0,
+              0, 0, 0, 3, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 8, 0, 0,
+              0, 0, 8, 8, 0, 0,
+              0, 0, 0, 8, 0, 0,
+            ];
+            assert.deepStrictEqual(
+              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+              testBitmap,
+              `Bitmap incorrect on command ${command}`
+            );
+          });
         }
       );
 
       step(
-        `Should correctly render active Tetromino rotated once on
-        ARROW_UP inputs`,
+        "Should correctly render active Tetromino hard-dropped",
         () => {
-          testGameStates = testTetris.inputHandle(ARROW_UP);
-          // prettier-ignore
-          testBitmap = [
-            0, 0, 0, 3, 0, 0,
-            0, 0, 0, 3, 3, 0,
-            0, 0, 0, 3, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 8, 0, 0,
-            0, 0, 0, 8, 8, 0,
-            0, 0, 0, 8, 0, 0,
-          ];
-          assert.deepStrictEqual(
-            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-            testBitmap,
-            "Bitmap incorrect"
-          );
+          const testCommands = [SPACE, NUMPAD_8];
+          testCommands.forEach(command => {
+            const testTetris = new Tetris(
+              DEFAULT_TEST_BOARD_WIDTH,
+              DEFAULT_TEST_BOARD_HEIGHT,
+              testOverwrittenTetromino
+            );
+            for (let numRuns = 0;
+              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+              numRuns += 1) {
+              testTetris.inputHandle(ARROW_DOWN);
+            }
+            const testGameStates = testTetris.inputHandle(command);
+            // prettier-ignore
+            const testBitmap = [
+              0, 0, 0, 3, 0, 0,
+              0, 0, 3, 3, 3, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0,
+              0, 0, 0, 8, 0, 0,
+              0, 0, 8, 8, 8, 0,
+              0, 0, 0, 3, 0, 0,
+              0, 0, 3, 3, 3, 0,
+            ];
+            assert.deepStrictEqual(
+              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+              testBitmap,
+              `Bitmap incorrect on command ${command}`
+            );
+          });
         }
       );
 
-      step(
-        `Should correctly render active Tetromino hard-dropped on
-        SPACE inputs`,
-        () => {
-          testGameStates = testTetris.inputHandle(SPACE);
-          // prettier-ignore
-          testBitmap = [
-            0, 0, 0, 3, 0, 0,
-            0, 0, 3, 3, 3, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 8, 0, 0,
-            0, 0, 8, 8, 8, 0,
-            0, 0, 0, 3, 0, 0,
-            0, 0, 0, 3, 3, 0,
-            0, 0, 0, 3, 0, 0,
-          ];
-          assert.deepStrictEqual(
-            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-            testBitmap
+      step("Should correctly hold the active Tetromino", () => {
+        const testCommands = [C_KEY, NUMPAD_0, SHIFT];
+        testCommands.forEach(command => {
+          const testTetris = new Tetris(
+            DEFAULT_TEST_BOARD_WIDTH,
+            DEFAULT_TEST_BOARD_HEIGHT,
+            testOverwrittenTetromino
           );
-        }
-      );
-
-      step("Should correctly hold the active Tetromino on C_KEY inputs", () => {
-        testGameStates = testTetris.inputHandle(C_KEY);
-        assert.strictEqual(
-          testGameStates.heldTetromino,
-          testOverwrittenTetromino.type,
-          "Held Tetromino incorrect"
-        );
+          for (let numRuns = 0;
+            numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+            numRuns += 1) {
+            testTetris.inputHandle(ARROW_DOWN);
+          }
+          const testGameStates = testTetris.inputHandle(command);
+          assert.strictEqual(
+            testGameStates.heldTetromino,
+            testOverwrittenTetromino.type,
+            `Held Tetromino incorrect on command ${command}`
+          );
+        });
       });
     });
   });
