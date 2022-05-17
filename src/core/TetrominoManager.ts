@@ -7,7 +7,7 @@ export const UPPER_X_INDEX = 3;
 export const LOWER_X_INDEX = 2;
 
 /* Misc consts */
-export const MAX_SPAWNED_TETROMINOS = 4;
+export const MAX_SPAWNED_TETROMINOS = 6;
 
 const MAX_TETROMINO_INDEX = 7;
 const MIN_TETROMINO_INDEX = 1;
