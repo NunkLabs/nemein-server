@@ -277,7 +277,7 @@ export class Tetris {
    */
   public updateGameStates(command: Command | null = null): TetrisStates {
     let activeTetromino = this.tetrominoManager.getActiveTetromino();
-    if (command !== null) {
+    if (command !== null && !this.gameOver) {
       /* Handling init - We only render the newly spawned tetromino */
       if (this.initRender) {
         this.board.renderTetromino(
