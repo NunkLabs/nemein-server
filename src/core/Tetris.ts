@@ -5,6 +5,7 @@ import {
   TetrisBoard,
   TetrisCol,
 } from "./TetrisBoard";
+
 import {
   X_INDEX,
   Y_INDEX,
@@ -48,6 +49,7 @@ export const EARLY_LEVEL_MULTIPLIER = 60;
 export const LATE_LEVEL_MULTIPLIER = 0.5;
 export const INTERVAL_CAP = 900;
 export const LEVEL_UP_TETROMINOS_COUNT = 10;
+export const LOCK_DELAY_MS = 500;
 
 /* Enum types */
 export enum Command {
@@ -106,7 +108,9 @@ export class Tetris {
   constructor (
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
-    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO
+    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO,
+    /* TBS-86: This is only for testing lock-delay */
+    dbgOverwriteTimer: boolean = false,
   ) {
     this.boardWidth = boardWidth;
     this.board = new TetrisBoard(boardWidth, boardHeight);
@@ -120,7 +124,8 @@ export class Tetris {
     this.score = 0;
     this.tetrominosCount = 0;
     this.level = 1;
-    this.gameInterval = DEFAULT_TIME_INTERVAL_MS;
+    this.gameInterval = (process.env.NODE_ENV === "test" && dbgOverwriteTimer) ?
+      0 : DEFAULT_TIME_INTERVAL_MS;
 
     this.initNewGame();
   }
@@ -430,6 +435,9 @@ export class Tetris {
              */
             return this.updateGameStates(Command.Down);
           }
+        } else if (this.corY === this.ghostCorY &&
+          this.gameInterval < LOCK_DELAY_MS) {
+          this.gameInterval = LOCK_DELAY_MS;
         }
       }
     }

@@ -23,6 +23,7 @@ import {
   NUMPAD_3,
   Z_KEY,
   DEFAULT_TIME_INTERVAL_MS,
+  LOCK_DELAY_MS,
   Tetris,
 } from "../src/core/Tetris";
 
@@ -340,6 +341,38 @@ describe("Tetris", () => {
             `Held Tetromino incorrect on command ${command}`
           );
         });
+      });
+    });
+
+    describe("Test lock delay", () => {
+      /**
+       * FIXME: It is way too extensive for now to test all Tetromino types and
+       * rotations. Hence, we're only testing 1 case of (T, O) pair Tetromino
+       */
+      const testOverwrittenTetromino: Tetromino = {
+        type: TetrominoType.T,
+        rotation: TetrominoRotation.O,
+      };
+      const testTetris = new Tetris(
+        DEFAULT_TEST_BOARD_WIDTH,
+        DEFAULT_TEST_BOARD_HEIGHT,
+        testOverwrittenTetromino,
+        true
+      );
+      step("Should correctly add a lock delay of 0.5s", () => {
+        for (let run = 0;
+          run < DEFAULT_TEST_BOARD_HEIGHT;
+          run += 1) {
+          const testGameStates = testTetris.inputHandle(ARROW_DOWN);
+          if (run > 0 && run < DEFAULT_TEST_BOARD_HEIGHT - 1) {
+            assert.strictEqual(testGameStates.gameInterval, 0, `Game interval
+              incorrect at iter ${run}/${DEFAULT_TEST_BOARD_HEIGHT - 1}`);
+          } else if (run === DEFAULT_TEST_BOARD_HEIGHT - 1) {
+            assert.strictEqual(testGameStates.gameInterval, LOCK_DELAY_MS,
+              `Game interval incorrect at iter ${run}/
+              ${DEFAULT_TEST_BOARD_HEIGHT - 1}`);
+          }
+        }
       });
     });
   });
