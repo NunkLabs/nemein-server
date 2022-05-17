@@ -13,6 +13,7 @@ import {
   TetrominoRotation,
   TetrominoManager,
   Tetromino,
+  TetrominoRotateDirection,
 } from "./TetrominoManager";
 
 /* Keyboard event consts */
@@ -22,6 +23,23 @@ export const ARROW_UP = "ArrowUp";
 export const ARROW_RIGHT = "ArrowRight";
 export const SPACE = " ";
 export const C_KEY = "c";
+export const X_KEY = "x";
+export const Z_KEY = "z";
+export const SHIFT = "Shift";
+export const CTRL = "Control";
+
+/* FIXME: This is might not be correct */
+export const NUMPAD_9 = "9";
+export const NUMPAD_8 = "8";
+export const NUMPAD_7 = "7";
+export const NUMPAD_6 = "6";
+export const NUMPAD_5 = "5";
+export const NUMPAD_4 = "4";
+export const NUMPAD_3 = "3";
+export const NUMPAD_2 = "2";
+export const NUMPAD_1 = "1";
+export const NUMPAD_0 = "0";
+
 export const KEYBOARD_EVENT = "keydown";
 
 /* Timer consts */
@@ -35,7 +53,8 @@ export const LEVEL_UP_TETROMINOS_COUNT = 10;
 export enum Command {
   Left,
   Right,
-  Rotate,
+  ClockwiseRotate,
+  CounterclockwiseRotate,
   Down,
   HardDrop,
   HoldTetromino,
@@ -84,7 +103,7 @@ export class Tetris {
 
   private gameInterval: number;
 
-  constructor(
+  constructor (
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
     dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO
@@ -117,6 +136,61 @@ export class Tetris {
       activeTetromino.type,
       activeTetromino.rotation
     );
+  }
+
+  /**
+   * @brief: handleRotation - Handle rotation command. This function does a
+   * bunchof wall kick test and renders the first one that passes
+   * @param rotateDirection - Direction to rotate
+   */
+  private handleRotation(rotateDirection: TetrominoRotateDirection =
+    TetrominoRotateDirection.Clockwise): void {
+    const activeTetromino = this.tetrominoManager.getActiveTetromino();
+
+    let testRotate = rotateDirection === TetrominoRotateDirection.Clockwise ?
+      (activeTetromino.rotation + 1)
+      : (activeTetromino.rotation - 1)
+    if (testRotate >= TetrominoRotation.NumTetrominoRotations) {
+      testRotate = TetrominoRotation.O;
+    } else if (testRotate < TetrominoRotation.O) {
+      testRotate = TetrominoRotation.L;
+    }
+
+    const testOffsetArr = TetrominoManager.getTetrominoWallKickOffsets(
+      activeTetromino.type,
+      activeTetromino.rotation,
+      rotateDirection
+    );
+
+    /* SRS's wall-kick testing (https://harddrop.com/wiki/SRS) */
+    for (
+      let testOffsetIdx = 0;
+      testOffsetIdx < testOffsetArr.length;
+      testOffsetIdx += 1
+    ) {
+      const testOffset = testOffsetArr[testOffsetIdx];
+      const testCorX = this.corX + testOffset[X_INDEX];
+      const testCorY = this.corY + testOffset[Y_INDEX];
+
+      if (
+        this.board.isTetrominoRenderable(
+          false,
+          testCorX,
+          testCorY,
+          activeTetromino.type,
+          testRotate
+        )
+      ) {
+        this.corX = testCorX;
+        this.corY = testCorY;
+        const newActiveTetromino: Tetromino = {
+          type: activeTetromino.type,
+          rotation: testRotate,
+        };
+        this.tetrominoManager.setActiveTetromino(newActiveTetromino);
+        break;
+      }
+    }
   }
 
   /**
@@ -239,8 +313,6 @@ export class Tetris {
         let yAddValid = true;
         let testCorX = 0;
         let testCorY = 0;
-        let testRotate = 0;
-        let testOffset = [];
 
         /* Determine which value to be modified (x - y - rotate ?) */
         switch (command) {
@@ -276,45 +348,12 @@ export class Tetris {
             }
             break;
           }
-          case Command.Rotate: {
-            testRotate =
-              (activeTetromino.rotation + 1) %
-              TetrominoRotation.NumTetrominoRotations;
-
-            const testOffsetArr = TetrominoManager.getTetrominoWallKickOffsets(
-              activeTetromino.type,
-              activeTetromino.rotation
-            );
-
-            /* SRS's wall-kick testing (https://harddrop.com/wiki/SRS) */
-            for (
-              let testOffsetIdx = 0;
-              testOffsetIdx < testOffsetArr.length;
-              testOffsetIdx += 1
-            ) {
-              testOffset = testOffsetArr[testOffsetIdx];
-              testCorX = this.corX + testOffset[X_INDEX];
-              testCorY = this.corY + testOffset[Y_INDEX];
-
-              if (
-                this.board.isTetrominoRenderable(
-                  false,
-                  testCorX,
-                  testCorY,
-                  activeTetromino.type,
-                  testRotate
-                )
-              ) {
-                this.corX = testCorX;
-                this.corY = testCorY;
-                const newActiveTetromino: Tetromino = {
-                  type: activeTetromino.type,
-                  rotation: testRotate,
-                };
-                this.tetrominoManager.setActiveTetromino(newActiveTetromino);
-                break;
-              }
-            }
+          case Command.ClockwiseRotate: {
+            this.handleRotation(TetrominoRotateDirection.Clockwise);
+            break;
+          }
+          case Command.CounterclockwiseRotate: {
+            this.handleRotation(TetrominoRotateDirection.Counterclockwise);
             break;
           }
           case Command.Down: {
@@ -421,20 +460,55 @@ export class Tetris {
    * @return: Updated game states
    */
   public inputHandle(key: string): TetrisStates {
+    let retCommand: Command = Command.Down;
     switch (key) {
+      case NUMPAD_4:
+      /* Fallthrough */
       case ARROW_LEFT:
-        return this.updateGameStates(Command.Left);
-      case ARROW_UP:
-        return this.updateGameStates(Command.Rotate);
+        retCommand = Command.Left;
+        break;
+      case NUMPAD_6:
+      /* Fallthrough */
       case ARROW_RIGHT:
-        return this.updateGameStates(Command.Right);
+        retCommand = Command.Right;
+        break;
+      case NUMPAD_1:
+      /* Fallthrough */
+      case NUMPAD_5:
+      /* Fallthrough */
+      case NUMPAD_9:
+      /* Fallthrough */
+      case X_KEY:
+      /* Fallthrough */
+      case ARROW_UP:
+        retCommand = Command.ClockwiseRotate;
+        break;
+      case NUMPAD_3:
+      /* Fallthrough */
+      case NUMPAD_7:
+      /* Fallthrough */
+      case Z_KEY:
+      /* Fallthrough */
+      case CTRL:
+        retCommand = Command.CounterclockwiseRotate;
+        break;
+      case NUMPAD_8:
+      /* Fallthrough */
       case SPACE:
-        return this.updateGameStates(Command.HardDrop);
+        retCommand = Command.HardDrop;
+        break;
+      case NUMPAD_0:
+      /* Fallthrough */
       case C_KEY:
-        return this.updateGameStates(Command.HoldTetromino);
+      /* Fallthrough */
+      case SHIFT:
+        retCommand = Command.HoldTetromino;
+        break;
       default:
-        return this.updateGameStates(Command.Down);
+        break;
     }
+
+    return this.updateGameStates(retCommand);
   }
 }
 

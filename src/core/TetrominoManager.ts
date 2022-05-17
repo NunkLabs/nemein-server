@@ -13,6 +13,7 @@ const MAX_TETROMINO_INDEX = 7;
 const MIN_TETROMINO_INDEX = 1;
 const WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX = 3;
 const WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX = 2;
+const SQUARE_TETROMINO_NUM_TESTS_TO_REMOVE = 4;
 
 /* Tetromino const arrays */
 const TETROMINOS_COORDS_ARR = [
@@ -241,39 +242,152 @@ const TETROMINOS_COORDS_ARR = [
   ],
 ];
 
-const WALL_KICK_COR_OFFSETS = [
-  /* O --> R */
-  [
-    [0, 0],
-    [-1, 0],
-    [-1, -1],
-    [0, 2],
-    [-1, 2],
+const JLSTZ_WALL_KICK_COR_OFFSETS = [
+  [/* O --> R */
+    [
+      [0, 0],
+      [-1, 0],
+      [-1, -1],
+      [0, 2],
+      [-1, 2],
+    ],
+    /* O --> L */
+    [
+      [0, 0],
+      [1, 0],
+      [1, -1],
+      [0, 2],
+      [1, 2],
+    ]
   ],
-  /* R --> Z */
   [
-    [0, 0],
-    [1, 0],
-    [1, 1],
-    [0, -2],
-    [1, -2],
+    /* R --> Z */
+    [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, -2],
+      [1, -2],
+    ],
+    /* R --> O */
+    [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, -2],
+      [1, -2],
+    ]
   ],
-  /* Z --> L */
   [
-    [0, 0],
-    [1, 0],
-    [1, -1],
-    [0, 2],
-    [1, 2],
+    /* Z --> L */
+    [
+      [0, 0],
+      [1, 0],
+      [1, -1],
+      [0, 2],
+      [1, 2],
+    ],
+    /* Z --> R */
+    [
+      [0, 0],
+      [-1, 0],
+      [-1, -1],
+      [0, 2],
+      [-1, 2],
+    ],
   ],
-  /* L --> O */
   [
-    [0, 0],
-    [-1, 0],
-    [-1, 1],
-    [0, -2],
-    [-1, -2],
+    /* L --> O */
+    [
+      [0, 0],
+      [-1, 0],
+      [-1, 1],
+      [0, -2],
+      [-1, -2],
+    ],
+    /* L --> Z */
+    [
+      [0, 0],
+      [-1, 0],
+      [-1, 1],
+      [0, -2],
+      [-1, -2],
+    ],
+  ]
+];
+
+const I_WALL_KICK_COR_OFFSETS = [
+  [/* O --> R */
+    [
+      [1, 0],
+      [-1, 0],
+      [2, 0],
+      [-1, -1],
+      [2, -2],
+    ],
+    /* O --> L */
+    [
+      [0, 1],
+      [-1, 1],
+      [2, 1],
+      [-1, -1],
+      [2, 2],
+    ]
   ],
+  [
+    /* R --> Z */
+    [
+      [0, 1],
+      [-1, 1],
+      [2, 1],
+      [-2, -1],
+      [2, 2],
+    ],
+    /* R --> O */
+    [
+      [-1, 0],
+      [1, 0],
+      [-2, 0],
+      [1, 1],
+      [-2, 2],
+    ]
+  ],
+  [
+    /* Z --> L */
+    [
+      [-1, 0],
+      [1, 0],
+      [-2, 0],
+      [1, -1],
+      [-2, 2],
+    ],
+    /* Z --> R */
+    [
+      [0, -1],
+      [1, -1],
+      [-2, -1],
+      [2, 1],
+      [-2, -2],
+    ],
+  ],
+  [
+    /* L --> O */
+    [
+      [0, -1],
+      [1, -1],
+      [-2, -1],
+      [1, 1],
+      [-2, -2],
+    ],
+    /* L --> Z */
+    [
+      [1, 0],
+      [-1, 0],
+      [2, 0],
+      [-1, 1],
+      [2, -2],
+    ],
+  ]
 ];
 
 /* Enum types */
@@ -298,6 +412,11 @@ export enum TetrominoRotation {
   NumTetrominoRotations,
 }
 
+export enum TetrominoRotateDirection {
+  Clockwise,
+  Counterclockwise,
+}
+
 export const DEFAULT_TEST_OVERWRITTEN_TETROMINO: Tetromino = {
   type: TetrominoType.Blank,
   rotation: TetrominoRotation.O,
@@ -319,7 +438,7 @@ export class TetrominoManager {
   /* This only applies when we're in a test env */
   private dbgOverwrittenTetromino: Tetromino;
 
-  constructor(
+  constructor (
     dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO
   ) {
     this.activeTetromino = {
@@ -484,19 +603,32 @@ export class TetrominoManager {
    * @brief: getTetrominoWallKickOffsets: Get the x and y offsets to be tested
    * in SRS's wall kick
    * @param type: Type of Tetromino
-   * @param rotation: Rotation of Tetromino
+   * @param rotation: Rotation of tetromino
+   * @param direction: Direction to be rotated
    * @returns: Array of coordinates of the wall kick offset to be tested
    */
   static getTetrominoWallKickOffsets(
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
+    direction: TetrominoRotateDirection
   ): number[][] {
-    const ret = WALL_KICK_COR_OFFSETS[rotation];
+    /* I Tetromino's wall kick offsets are different */
+    const ret = type === TetrominoType.I ?
+      JSON.parse(JSON.stringify(I_WALL_KICK_COR_OFFSETS[rotation][direction])) :
+      JSON.parse(JSON.stringify(
+        JLSTZ_WALL_KICK_COR_OFFSETS[rotation][direction]));
     if (type === TetrominoType.T) {
       if (rotation === TetrominoRotation.O) {
         ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
       } else if (rotation === TetrominoRotation.Z) {
         ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX, 1);
+      }
+    } else if (type === TetrominoType.Square) {
+      /* In case of the Square Tetromino, wall kick offset is always (0,0) */
+      for (let popIdx = 0;
+        popIdx < SQUARE_TETROMINO_NUM_TESTS_TO_REMOVE;
+        popIdx += 1) {
+        ret.pop();
       }
     }
 
