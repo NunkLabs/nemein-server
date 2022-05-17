@@ -2,13 +2,15 @@ import { assert } from "chai";
 
 import {
   MAX_SPAWNED_TETROMINOS,
+  JLSTZ_WALL_KICK_COR_OFFSETS,
+  I_WALL_KICK_COR_OFFSETS,
   WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX,
   WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX,
-  WALL_KICK_COR_OFFSETS,
   TetrominoManager,
   Tetromino,
   TetrominoRotation,
   TetrominoType,
+  TetrominoRotateDirection,
 } from "../src/core/TetrominoManager";
 
 describe("TetrominoManager", () => {
@@ -146,56 +148,61 @@ describe("TetrominoManager", () => {
       });
     });
 
-    describe("Test getting wall kick offsets", () => {
-      for (let type = TetrominoType.Blank; type <
-        TetrominoType.NumTetrominoTypes; type += 1) {
-        for (let rotation = TetrominoRotation.O;
-          rotation < TetrominoRotation.NumTetrominoRotations;
-          rotation += 1) {
-          const offsets = TetrominoManager.getTetrominoWallKickOffsets(type,
-            rotation);
-          switch (type) {
-            case TetrominoType.Square:
-            /* Fallthrough */
-            case TetrominoType.I:
-            /* Fallthrough */
-            case TetrominoType.J:
-            /* Fallthrough */
-            case TetrominoType.L:
-            /* Fallthrough */
-            case TetrominoType.Z:
-            /* Fallthrough */
-            case TetrominoType.S:
-              assert.deepStrictEqual(offsets, WALL_KICK_COR_OFFSETS[rotation],
-                `Wall kick offset of type: ${type}}, rotation: ${rotation}
-                not correct`);
-              break;
-            case TetrominoType.T:
-              if (rotation === TetrominoRotation.O) {
-                const refOffsets = JSON.parse(JSON.stringify
-                  (WALL_KICK_COR_OFFSETS[rotation]));
-                refOffsets.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
-                assert.deepStrictEqual(offsets, refOffsets,
-                  `Wall kick offset of type: ${type}}, rotation: ${rotation}
-                  not correct`);
-              } else if (rotation === TetrominoRotation.Z) {
-                const refOffsets = JSON.parse(JSON.stringify
-                  (WALL_KICK_COR_OFFSETS[rotation]));
-                refOffsets.splice(WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX, 1);
-                assert.deepStrictEqual(offsets, refOffsets,
-                  `Wall kick offset of type: ${type}}, rotation: ${rotation}
-                  not correct`);
+    describe("Test Tetrominos' wall kick offsets", () => {
+      it(`Should correctly get the wall kick offsets`, () => {
+        for (let type = TetrominoType.Blank;
+          type < TetrominoType.NumTetrominoTypes;
+          type += 1) {
+          for (let rotation = TetrominoRotation.O;
+            rotation < TetrominoRotation.NumTetrominoRotations;
+            rotation += 1) {
+            for (let direction = TetrominoRotateDirection.Clockwise;
+              direction < TetrominoRotateDirection.NumTetrominoDirections;
+              direction += 1) {
+              const offsets = TetrominoManager.getTetrominoWallKickOffsets(
+                type, rotation, direction);
+              let cmpOffsets: number[][] = [];
+              switch (type) {
+                case TetrominoType.Blank:
+                  break;
+                case TetrominoType.Square:
+                  cmpOffsets = [[0, 0]];
+                  break;
+                case TetrominoType.I:
+                  cmpOffsets = I_WALL_KICK_COR_OFFSETS[rotation][direction];
+                  break;
+                case TetrominoType.T:
+                  cmpOffsets = JLSTZ_WALL_KICK_COR_OFFSETS[rotation][direction];
+                  if (rotation === TetrominoRotation.O) {
+                    cmpOffsets.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
+                  } else if (rotation === TetrominoRotation.Z) {
+                    cmpOffsets.splice(WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX, 1);
+                  }
+                  break;
+                case TetrominoType.J:
+                /* Fallthrough */
+                case TetrominoType.L:
+                /* Fallthrough */
+                case TetrominoType.Z:
+                /* Fallthrough */
+                case TetrominoType.S:
+                  cmpOffsets = JLSTZ_WALL_KICK_COR_OFFSETS[rotation][direction];
+                  break;
+                case TetrominoType.Ghost:
+                  break;
+                default:
+                  break;
               }
-              break;
-            case TetrominoType.Ghost:
-            case TetrominoType.Blank:
-            default:
-              assert.isEmpty(offsets, `Expecting offsets of type ${type} to be
-                empty`);
-              break;
+              assert.deepStrictEqual(
+                offsets,
+                cmpOffsets,
+                `Offsets differ for Tetromino ${type}, rotation ${rotation},
+                direction ${direction}`
+              );
+            }
           }
         }
-      }
+      });
     });
   });
 });
