@@ -115,7 +115,7 @@ export class Tetris {
     this.boardWidth = boardWidth;
     this.board = new TetrisBoard(boardWidth, boardHeight);
     this.onHold = false;
-    this.corX = boardWidth / 2;
+    this.corX = Math.floor((boardWidth - 1) / 2);
     this.corY = Y_START;
     this.ghostCorY = Y_START;
     this.tetrominoManager = new TetrominoManager(dbgOverwrittenTetromino);
@@ -215,7 +215,7 @@ export class Tetris {
 
     /* Prepare new tetromino for the next board update */
     activeTetromino = this.tetrominoManager.getNewTetromino();
-    this.corX = Math.floor(this.boardWidth / 2);
+    this.corX = Math.floor((this.boardWidth - 1) / 2);
     this.corY = Y_START;
     this.ghostCorY = this.board.findGhostTetrominoY(
       this.corX,

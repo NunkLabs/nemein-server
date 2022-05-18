@@ -27,7 +27,10 @@ import {
   Tetris,
 } from "../src/core/Tetris";
 
-import { TetrisBoard } from "../src/core/TetrisBoard";
+import {
+  Y_START,
+  TetrisBoard,
+} from "../src/core/TetrisBoard";
 
 import {
   Tetromino,
@@ -57,6 +60,12 @@ describe("Tetris", () => {
         false,
         "Game over value is incorrect"
       );
+      assert.strictEqual(testGameStates.corX,
+        Math.floor((DEFAULT_TEST_BOARD_WIDTH - 1) / 2),
+        "Starting position corX is incorrect");
+      assert.strictEqual(testGameStates.corY,
+        Y_START,
+        "Starting position corY is incorrect");
       assert.strictEqual(testGameStates.score, 0, "Score value is incorrect");
       assert.strictEqual(testGameStates.level, 1, "Level value is incorrect");
       assert.strictEqual(
@@ -90,7 +99,7 @@ describe("Tetris", () => {
           let testGameStates = testTetris.inputHandle(command);
           // prettier-ignore
           let testBitmap = [
-            0, 0, 3, 3, 3, 0,
+            0, 3, 3, 3, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
@@ -98,8 +107,8 @@ describe("Tetris", () => {
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
-            0, 0, 0, 8, 0, 0,
-            0, 0, 8, 8, 8, 0,
+            0, 0, 8, 0, 0, 0,
+            0, 8, 8, 8, 0, 0,
           ];
           assert.deepStrictEqual(
             TetrisBoard.tetrisColsToBitmap(testGameStates.field),
@@ -111,16 +120,16 @@ describe("Tetris", () => {
           testGameStates = testTetris.inputHandle(command);
           // prettier-ignore
           testBitmap = [
-            0, 0, 0, 3, 0, 0,
-            0, 0, 3, 3, 3, 0,
+            0, 0, 3, 0, 0, 0,
+            0, 3, 3, 3, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,
-            0, 0, 0, 8, 0, 0,
-            0, 0, 8, 8, 8, 0,
+            0, 0, 8, 0, 0, 0,
+            0, 8, 8, 8, 0, 0,
           ];
           assert.deepStrictEqual(
             TetrisBoard.tetrisColsToBitmap(testGameStates.field),
@@ -148,16 +157,16 @@ describe("Tetris", () => {
             const testGameStates = testTetris.inputHandle(command);
             // prettier-ignore
             const testBitmap = [
-              0, 0, 0, 0, 3, 0,
-              0, 0, 0, 3, 3, 3,
+              0, 0, 0, 3, 0, 0,
+              0, 0, 3, 3, 3, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 8, 0,
-              0, 0, 0, 8, 8, 8,
+              0, 0, 0, 8, 0, 0,
+              0, 0, 8, 8, 8, 0,
             ];
             assert.deepStrictEqual(
               TetrisBoard.tetrisColsToBitmap(testGameStates.field),
@@ -187,16 +196,16 @@ describe("Tetris", () => {
             const testGameStates = testTetris.inputHandle(command);
             // prettier-ignore
             const testBitmap = [
-              0, 0, 3, 0, 0, 0,
-              0, 3, 3, 3, 0, 0,
+              0, 3, 0, 0, 0, 0,
+              3, 3, 3, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
-              0, 0, 8, 0, 0, 0,
-              0, 8, 8, 8, 0, 0,
+              0, 8, 0, 0, 0, 0,
+              8, 8, 8, 0, 0, 0,
             ];
             assert.deepStrictEqual(
               TetrisBoard.tetrisColsToBitmap(testGameStates.field),
@@ -225,16 +234,16 @@ describe("Tetris", () => {
             const testGameStates = testTetris.inputHandle(command);
             // prettier-ignore
             const testBitmap = [
-              0, 0, 0, 3, 0, 0,
-              0, 0, 0, 3, 3, 0,
-              0, 0, 0, 3, 0, 0,
+              0, 0, 3, 0, 0, 0,
+              0, 0, 3, 3, 0, 0,
+              0, 0, 3, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
-              0, 0, 0, 8, 0, 0,
-              0, 0, 0, 8, 8, 0,
-              0, 0, 0, 8, 0, 0,
+              0, 0, 8, 0, 0, 0,
+              0, 0, 8, 8, 0, 0,
+              0, 0, 8, 0, 0, 0,
             ];
             assert.deepStrictEqual(
               TetrisBoard.tetrisColsToBitmap(testGameStates.field),
@@ -263,16 +272,16 @@ describe("Tetris", () => {
             const testGameStates = testTetris.inputHandle(command);
             // prettier-ignore
             const testBitmap = [
-              0, 0, 0, 3, 0, 0,
-              0, 0, 3, 3, 0, 0,
-              0, 0, 0, 3, 0, 0,
+              0, 0, 3, 0, 0, 0,
+              0, 3, 3, 0, 0, 0,
+              0, 0, 3, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
-              0, 0, 0, 8, 0, 0,
-              0, 0, 8, 8, 0, 0,
-              0, 0, 0, 8, 0, 0,
+              0, 0, 8, 0, 0, 0,
+              0, 8, 8, 0, 0, 0,
+              0, 0, 8, 0, 0, 0,
             ];
             assert.deepStrictEqual(
               TetrisBoard.tetrisColsToBitmap(testGameStates.field),
@@ -301,16 +310,16 @@ describe("Tetris", () => {
             const testGameStates = testTetris.inputHandle(command);
             // prettier-ignore
             const testBitmap = [
-              0, 0, 0, 3, 0, 0,
-              0, 0, 3, 3, 3, 0,
+              0, 0, 3, 0, 0, 0,
+              0, 3, 3, 3, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
-              0, 0, 0, 8, 0, 0,
-              0, 0, 8, 8, 8, 0,
-              0, 0, 0, 3, 0, 0,
-              0, 0, 3, 3, 3, 0,
+              0, 0, 8, 0, 0, 0,
+              0, 8, 8, 8, 0, 0,
+              0, 0, 3, 0, 0, 0,
+              0, 3, 3, 3, 0, 0,
             ];
             assert.deepStrictEqual(
               TetrisBoard.tetrisColsToBitmap(testGameStates.field),

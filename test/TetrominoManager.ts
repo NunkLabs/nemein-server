@@ -72,58 +72,20 @@ describe("TetrominoManager", () => {
     });
 
     describe("Test swapping held Tetromino", () => {
-      describe("Held Tetromino is blank", () => {
-        const testTetrominoManager = new TetrominoManager();
-        const testPrevActiveTetromino =
-          testTetrominoManager.getActiveTetromino();
-        testTetrominoManager.swapHeldTetromino();
-        const testHeldTetromino = testTetrominoManager.getHeldTetromino();
-        const testActiveTetromino = testTetrominoManager.getActiveTetromino();
-        it("Should correctly swap the held & active Tetrominos", () => {
-          assert.isTrue(
-            testHeldTetromino.type !== TetrominoType.Blank &&
-            testHeldTetromino.type !== TetrominoType.Ghost,
-            "Held Tetromino is not correctly swapped"
-          );
-          assert.notDeepEqual(
-            testActiveTetromino,
-            testPrevActiveTetromino,
-            "Active Tetromino is not correctly swapped"
-          );
-          assert.deepStrictEqual(
-            testHeldTetromino.rotation,
-            TetrominoRotation.O,
-            "Held Tetromino's rotation is not correctly set"
-          );
-        });
-      });
-      describe(`Held Tetromino is not blank`, () => {
-        const testTetrominoManager = new TetrominoManager();
-        /* Gotta swap twice to get to this test case */
-        testTetrominoManager.swapHeldTetromino();
-        const testPrevActiveTetromino =
-          testTetrominoManager.getActiveTetromino();
-        const testPrevHeldTetromino = testTetrominoManager.getHeldTetromino();
-        testTetrominoManager.swapHeldTetromino();
-        const testHeldTetromino = testTetrominoManager.getHeldTetromino();
-        const testActiveTetromino = testTetrominoManager.getActiveTetromino();
-        it("Should correctly swap the held & active Tetrominos", () => {
-          assert.deepStrictEqual(
-            testHeldTetromino,
-            testPrevActiveTetromino,
-            "Held Tetromino is not correctly swapped"
-          );
-          assert.deepStrictEqual(
-            testActiveTetromino,
-            testPrevHeldTetromino,
-            "Active Tetromino is not correctly swapped"
-          );
-          assert.strictEqual(
-            testHeldTetromino.rotation,
-            TetrominoRotation.O,
-            "Held Tetromino's rotation is not correctly set"
-          );
-        });
+      const testTetrominoManager = new TetrominoManager();
+      testTetrominoManager.swapHeldTetromino();
+      const testHeldTetromino = testTetrominoManager.getHeldTetromino();
+      it("Should correctly swap the held Tetromino", () => {
+        assert.isTrue(
+          testHeldTetromino.type !== TetrominoType.Blank &&
+          testHeldTetromino.type !== TetrominoType.Ghost,
+          "Held Tetromino is not correctly swapped"
+        );
+        assert.deepStrictEqual(
+          testHeldTetromino.rotation,
+          TetrominoRotation.O,
+          "Held Tetromino's rotation is not correctly set"
+        );
       });
     });
 
