@@ -15,7 +15,7 @@
   "dependencies": {
     "bufferutil": "^4.0.6",
     "utf-8-validate": "^5.0.9",
-    "ws": "^8.6.0"
+    "ws": "^8.7.0"
   },
   "devDependencies": {
     "@types/chai": "^4.3.1",
