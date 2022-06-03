@@ -2,7 +2,7 @@
 
 ## Getting started
 
-The minimum version of Node.js required is **Node.js LTS 16.x**.
+The minimum version of Node.js required is **Node.js LTS 18.x**.
 
 **To install**
 
