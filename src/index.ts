@@ -2,33 +2,36 @@ import { WebSocketServer } from "ws";
 
 import { Command, Tetris } from "./core/Tetris";
 
+const SPACE = " ";
+
 const server = new WebSocketServer({ port: 8080 });
 
 server.on("connection", (socket) => {
   /* Sends the initial game state on open */
   let active = true;
   let game = new Tetris();
-  let gameState = game.updateGameStates();
+  let state = game.updateGameStates();
+  let timeout: NodeJS.Timeout | null = null;
 
-  socket.send(JSON.stringify(gameState));
+  socket.send(JSON.stringify(state));
 
   /* Sends the updated game state after an interval */
   const gameTimeout = () => {
     if (active) {
-      gameState = game.updateGameStates(Command.Down);
+      state = game.updateGameStates(Command.Down);
 
-      socket.send(JSON.stringify(gameState));
+      socket.send(JSON.stringify(state));
 
-      if (gameState.gameOver) {
+      if (state.gameOver) {
         active = false;
       }
     }
 
     /* We use setTimeout recursively to simulate a dynamic interval */
-    setTimeout(gameTimeout, gameState.gameInterval);
+    timeout = setTimeout(gameTimeout, state.gameInterval);
   };
 
-  setTimeout(gameTimeout, gameState.gameInterval);
+  timeout = setTimeout(gameTimeout, state.gameInterval);
 
   socket.on("message", (data) => {
     const input = data.toString();
@@ -41,17 +44,23 @@ server.on("connection", (socket) => {
       }
       case "Restart": {
         game = new Tetris();
-        gameState = game.updateGameStates();
+        state = game.updateGameStates();
 
-        socket.send(JSON.stringify(gameState));
+        socket.send(JSON.stringify(state));
 
         break;
       }
       default: {
-        if (gameState.gameOver) return;
+        if (state.gameOver) return;
 
         /* Sends the updated game state after registering an input */
         socket.send(JSON.stringify(game.inputHandle(input)));
+
+        if (input !== SPACE || !timeout) return;
+
+        clearTimeout(timeout);
+
+        timeout = setTimeout(gameTimeout, state.gameInterval);
       }
     }
   });
