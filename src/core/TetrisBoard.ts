@@ -26,7 +26,7 @@ export class TetrisBoard {
 
   private field: TetrisCol[];
 
-  constructor (
+  constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT
   ) {
