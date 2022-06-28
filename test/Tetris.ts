@@ -27,10 +27,7 @@ import {
   Tetris,
 } from "../src/core/Tetris";
 
-import {
-  Y_START,
-  TetrisBoard,
-} from "../src/core/TetrisBoard";
+import { Y_START, TetrisBoard } from "../src/core/TetrisBoard";
 
 import {
   Tetromino,
@@ -40,7 +37,7 @@ import {
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;
-const DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS = 2
+const DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS = 2;
 
 describe("Tetris", () => {
   describe(`Test initilization`, () => {
@@ -60,12 +57,16 @@ describe("Tetris", () => {
         false,
         "Game over value is incorrect"
       );
-      assert.strictEqual(testGameStates.corX,
+      assert.strictEqual(
+        testGameStates.corX,
         Math.floor((DEFAULT_TEST_BOARD_WIDTH - 1) / 2),
-        "Starting position corX is incorrect");
-      assert.strictEqual(testGameStates.corY,
+        "Starting position corX is incorrect"
+      );
+      assert.strictEqual(
+        testGameStates.corY,
         Y_START,
-        "Starting position corY is incorrect");
+        "Starting position corY is incorrect"
+      );
       assert.strictEqual(testGameStates.score, 0, "Score value is incorrect");
       assert.strictEqual(testGameStates.level, 1, "Level value is incorrect");
       assert.strictEqual(
@@ -89,7 +90,7 @@ describe("Tetris", () => {
 
       step("Should correctly render on down input", () => {
         const testCommands = [ARROW_DOWN, NUMPAD_2];
-        testCommands.forEach(command => {
+        testCommands.forEach((command) => {
           const testTetris = new Tetris(
             DEFAULT_TEST_BOARD_WIDTH,
             DEFAULT_TEST_BOARD_HEIGHT,
@@ -139,24 +140,24 @@ describe("Tetris", () => {
         });
       });
 
-      step(
-        "Should correctly render active Tetromino right 1 unit",
-        () => {
-          const testCommands = [ARROW_RIGHT, NUMPAD_6];
-          testCommands.forEach(command => {
-            const testTetris = new Tetris(
-              DEFAULT_TEST_BOARD_WIDTH,
-              DEFAULT_TEST_BOARD_HEIGHT,
-              testOverwrittenTetromino
-            );
-            for (let numRuns = 0;
-              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
-              numRuns += 1) {
-              testTetris.inputHandle(ARROW_DOWN);
-            }
-            const testGameStates = testTetris.inputHandle(command);
-            // prettier-ignore
-            const testBitmap = [
+      step("Should correctly render active Tetromino right 1 unit", () => {
+        const testCommands = [ARROW_RIGHT, NUMPAD_6];
+        testCommands.forEach((command) => {
+          const testTetris = new Tetris(
+            DEFAULT_TEST_BOARD_WIDTH,
+            DEFAULT_TEST_BOARD_HEIGHT,
+            testOverwrittenTetromino
+          );
+          for (
+            let numRuns = 0;
+            numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+            numRuns += 1
+          ) {
+            testTetris.inputHandle(ARROW_DOWN);
+          }
+          const testGameStates = testTetris.inputHandle(command);
+          // prettier-ignore
+          const testBitmap = [
               0, 0, 0, 3, 0, 0,
               0, 0, 3, 3, 3, 0,
               0, 0, 0, 0, 0, 0,
@@ -168,34 +169,32 @@ describe("Tetris", () => {
               0, 0, 0, 8, 0, 0,
               0, 0, 8, 8, 8, 0,
             ];
-            assert.deepStrictEqual(
-              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-              testBitmap,
-              `Bitmap incorrect on command ${command}`
-            );
-          });
-        }
+          assert.deepStrictEqual(
+            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+            testBitmap,
+            `Bitmap incorrect on command ${command}`
+          );
+        });
+      });
 
-      );
-
-      step(
-        "Should correctly render active Tetromino left 1 unit",
-        () => {
-          const testCommands = [ARROW_LEFT, NUMPAD_4];
-          testCommands.forEach(command => {
-            const testTetris = new Tetris(
-              DEFAULT_TEST_BOARD_WIDTH,
-              DEFAULT_TEST_BOARD_HEIGHT,
-              testOverwrittenTetromino
-            );
-            for (let numRuns = 0;
-              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
-              numRuns += 1) {
-              testTetris.inputHandle(ARROW_DOWN);
-            }
-            const testGameStates = testTetris.inputHandle(command);
-            // prettier-ignore
-            const testBitmap = [
+      step("Should correctly render active Tetromino left 1 unit", () => {
+        const testCommands = [ARROW_LEFT, NUMPAD_4];
+        testCommands.forEach((command) => {
+          const testTetris = new Tetris(
+            DEFAULT_TEST_BOARD_WIDTH,
+            DEFAULT_TEST_BOARD_HEIGHT,
+            testOverwrittenTetromino
+          );
+          for (
+            let numRuns = 0;
+            numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+            numRuns += 1
+          ) {
+            testTetris.inputHandle(ARROW_DOWN);
+          }
+          const testGameStates = testTetris.inputHandle(command);
+          // prettier-ignore
+          const testBitmap = [
               0, 3, 0, 0, 0, 0,
               3, 3, 3, 0, 0, 0,
               0, 0, 0, 0, 0, 0,
@@ -207,28 +206,29 @@ describe("Tetris", () => {
               0, 8, 0, 0, 0, 0,
               8, 8, 8, 0, 0, 0,
             ];
-            assert.deepStrictEqual(
-              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-              testBitmap,
-              `Bitmap incorrect on command ${command}`
-            );
-          });
-        }
-      );
+          assert.deepStrictEqual(
+            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+            testBitmap,
+            `Bitmap incorrect on command ${command}`
+          );
+        });
+      });
 
       step(
         "Should correctly render active Tetromino rotated once clockwised",
         () => {
           const testCommands = [ARROW_UP, NUMPAD_1, NUMPAD_5, NUMPAD_9];
-          testCommands.forEach(command => {
+          testCommands.forEach((command) => {
             const testTetris = new Tetris(
               DEFAULT_TEST_BOARD_WIDTH,
               DEFAULT_TEST_BOARD_HEIGHT,
               testOverwrittenTetromino
             );
-            for (let numRuns = 0;
+            for (
+              let numRuns = 0;
               numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
-              numRuns += 1) {
+              numRuns += 1
+            ) {
               testTetris.inputHandle(ARROW_DOWN);
             }
             const testGameStates = testTetris.inputHandle(command);
@@ -258,15 +258,17 @@ describe("Tetris", () => {
         "Should correctly render active Tetromino rotated once counterclockwised",
         () => {
           const testCommands = [CTRL, Z_KEY, NUMPAD_3, NUMPAD_7];
-          testCommands.forEach(command => {
+          testCommands.forEach((command) => {
             const testTetris = new Tetris(
               DEFAULT_TEST_BOARD_WIDTH,
               DEFAULT_TEST_BOARD_HEIGHT,
               testOverwrittenTetromino
             );
-            for (let numRuns = 0;
+            for (
+              let numRuns = 0;
               numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
-              numRuns += 1) {
+              numRuns += 1
+            ) {
               testTetris.inputHandle(ARROW_DOWN);
             }
             const testGameStates = testTetris.inputHandle(command);
@@ -292,24 +294,24 @@ describe("Tetris", () => {
         }
       );
 
-      step(
-        "Should correctly render active Tetromino hard-dropped",
-        () => {
-          const testCommands = [SPACE, NUMPAD_8];
-          testCommands.forEach(command => {
-            const testTetris = new Tetris(
-              DEFAULT_TEST_BOARD_WIDTH,
-              DEFAULT_TEST_BOARD_HEIGHT,
-              testOverwrittenTetromino
-            );
-            for (let numRuns = 0;
-              numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
-              numRuns += 1) {
-              testTetris.inputHandle(ARROW_DOWN);
-            }
-            const testGameStates = testTetris.inputHandle(command);
-            // prettier-ignore
-            const testBitmap = [
+      step("Should correctly render active Tetromino hard-dropped", () => {
+        const testCommands = [SPACE, NUMPAD_8];
+        testCommands.forEach((command) => {
+          const testTetris = new Tetris(
+            DEFAULT_TEST_BOARD_WIDTH,
+            DEFAULT_TEST_BOARD_HEIGHT,
+            testOverwrittenTetromino
+          );
+          for (
+            let numRuns = 0;
+            numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
+            numRuns += 1
+          ) {
+            testTetris.inputHandle(ARROW_DOWN);
+          }
+          const testGameStates = testTetris.inputHandle(command);
+          // prettier-ignore
+          const testBitmap = [
               0, 0, 3, 0, 0, 0,
               0, 3, 3, 3, 0, 0,
               0, 0, 0, 0, 0, 0,
@@ -321,26 +323,27 @@ describe("Tetris", () => {
               0, 0, 3, 0, 0, 0,
               0, 3, 3, 3, 0, 0,
             ];
-            assert.deepStrictEqual(
-              TetrisBoard.tetrisColsToBitmap(testGameStates.field),
-              testBitmap,
-              `Bitmap incorrect on command ${command}`
-            );
-          });
-        }
-      );
+          assert.deepStrictEqual(
+            TetrisBoard.tetrisColsToBitmap(testGameStates.field),
+            testBitmap,
+            `Bitmap incorrect on command ${command}`
+          );
+        });
+      });
 
       step("Should correctly hold the active Tetromino", () => {
         const testCommands = [C_KEY, NUMPAD_0, SHIFT];
-        testCommands.forEach(command => {
+        testCommands.forEach((command) => {
           const testTetris = new Tetris(
             DEFAULT_TEST_BOARD_WIDTH,
             DEFAULT_TEST_BOARD_HEIGHT,
             testOverwrittenTetromino
           );
-          for (let numRuns = 0;
+          for (
+            let numRuns = 0;
             numRuns < DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS;
-            numRuns += 1) {
+            numRuns += 1
+          ) {
             testTetris.inputHandle(ARROW_DOWN);
           }
           const testGameStates = testTetris.inputHandle(command);
@@ -369,17 +372,22 @@ describe("Tetris", () => {
         true
       );
       step("Should correctly add a lock delay of 0.5s", () => {
-        for (let run = 0;
-          run < DEFAULT_TEST_BOARD_HEIGHT;
-          run += 1) {
+        for (let run = 0; run < DEFAULT_TEST_BOARD_HEIGHT; run += 1) {
           const testGameStates = testTetris.inputHandle(ARROW_DOWN);
           if (run > 0 && run < DEFAULT_TEST_BOARD_HEIGHT - 1) {
-            assert.strictEqual(testGameStates.gameInterval, 0, `Game interval
-              incorrect at iter ${run}/${DEFAULT_TEST_BOARD_HEIGHT - 1}`);
+            assert.strictEqual(
+              testGameStates.gameInterval,
+              0,
+              `Game interval
+              incorrect at iter ${run}/${DEFAULT_TEST_BOARD_HEIGHT - 1}`
+            );
           } else if (run === DEFAULT_TEST_BOARD_HEIGHT - 1) {
-            assert.strictEqual(testGameStates.gameInterval, LOCK_DELAY_MS,
+            assert.strictEqual(
+              testGameStates.gameInterval,
+              LOCK_DELAY_MS,
               `Game interval incorrect at iter ${run}/
-              ${DEFAULT_TEST_BOARD_HEIGHT - 1}`);
+              ${DEFAULT_TEST_BOARD_HEIGHT - 1}`
+            );
           }
         }
       });

@@ -23,7 +23,7 @@ describe("TetrominoManager", () => {
     it("Should return a valid active Tetromino", () => {
       assert.isTrue(
         testActiveTetromino.type !== TetrominoType.Blank &&
-        testActiveTetromino.type !== TetrominoType.Ghost,
+          testActiveTetromino.type !== TetrominoType.Ghost,
         "Active Tetromino's type is invalid"
       );
       assert.strictEqual(
@@ -78,7 +78,7 @@ describe("TetrominoManager", () => {
       it("Should correctly swap the held Tetromino", () => {
         assert.isTrue(
           testHeldTetromino.type !== TetrominoType.Blank &&
-          testHeldTetromino.type !== TetrominoType.Ghost,
+            testHeldTetromino.type !== TetrominoType.Ghost,
           "Held Tetromino is not correctly swapped"
         );
         assert.deepStrictEqual(
@@ -112,17 +112,26 @@ describe("TetrominoManager", () => {
 
     describe("Test Tetrominos' wall kick offsets", () => {
       it(`Should correctly get the wall kick offsets`, () => {
-        for (let type = TetrominoType.Blank;
+        for (
+          let type = TetrominoType.Blank;
           type < TetrominoType.NumTetrominoTypes;
-          type += 1) {
-          for (let rotation = TetrominoRotation.O;
+          type += 1
+        ) {
+          for (
+            let rotation = TetrominoRotation.O;
             rotation < TetrominoRotation.NumTetrominoRotations;
-            rotation += 1) {
-            for (let direction = TetrominoRotateDirection.Clockwise;
+            rotation += 1
+          ) {
+            for (
+              let direction = TetrominoRotateDirection.Clockwise;
               direction < TetrominoRotateDirection.NumTetrominoDirections;
-              direction += 1) {
+              direction += 1
+            ) {
               const offsets = TetrominoManager.getTetrominoWallKickOffsets(
-                type, rotation, direction);
+                type,
+                rotation,
+                direction
+              );
               let cmpOffsets: number[][] = [];
               switch (type) {
                 case TetrominoType.Blank:

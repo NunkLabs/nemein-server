@@ -105,12 +105,12 @@ export class Tetris {
 
   private gameInterval: number;
 
-  constructor (
+  constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
     dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO,
     /* TBS-86: This is only for testing lock-delay */
-    dbgOverwriteTimer: boolean = false,
+    dbgOverwriteTimer: boolean = false
   ) {
     this.boardWidth = boardWidth;
     this.board = new TetrisBoard(boardWidth, boardHeight);
@@ -124,8 +124,10 @@ export class Tetris {
     this.score = 0;
     this.tetrominosCount = 0;
     this.level = 1;
-    this.gameInterval = (process.env.NODE_ENV === "test" && dbgOverwriteTimer) ?
-      0 : DEFAULT_TIME_INTERVAL_MS;
+    this.gameInterval =
+      process.env.NODE_ENV === "test" && dbgOverwriteTimer
+        ? 0
+        : DEFAULT_TIME_INTERVAL_MS;
 
     this.initNewGame();
   }
@@ -145,16 +147,18 @@ export class Tetris {
 
   /**
    * @brief: handleRotation - Handle rotation command. This function does a
-   * bunchof wall kick test and renders the first one that passes
+   * bunch of wall kick test and renders the first one that passes
    * @param rotateDirection - Direction to rotate
    */
-  private handleRotation(rotateDirection: TetrominoRotateDirection =
-    TetrominoRotateDirection.Clockwise): void {
+  private handleRotation(
+    rotateDirection: TetrominoRotateDirection = TetrominoRotateDirection.Clockwise
+  ): void {
     const activeTetromino = this.tetrominoManager.getActiveTetromino();
 
-    let testRotate = rotateDirection === TetrominoRotateDirection.Clockwise ?
-      (activeTetromino.rotation + 1)
-      : (activeTetromino.rotation - 1)
+    let testRotate =
+      rotateDirection === TetrominoRotateDirection.Clockwise
+        ? activeTetromino.rotation + 1
+        : activeTetromino.rotation - 1;
     if (testRotate >= TetrominoRotation.NumTetrominoRotations) {
       testRotate = TetrominoRotation.O;
     } else if (testRotate < TetrominoRotation.O) {
@@ -435,8 +439,10 @@ export class Tetris {
              */
             return this.updateGameStates(Command.Down);
           }
-        } else if (this.corY === this.ghostCorY &&
-          this.gameInterval < LOCK_DELAY_MS) {
+        } else if (
+          this.corY === this.ghostCorY &&
+          this.gameInterval < LOCK_DELAY_MS
+        ) {
           this.gameInterval = LOCK_DELAY_MS;
         }
       }

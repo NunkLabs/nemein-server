@@ -1,67 +1,16 @@
-import { WebSocketServer } from "ws";
+import * as dotenv from "dotenv";
+import { nanoid } from "nanoid";
 
-import { Command, Tetris } from "./core/Tetris";
+import { Tetris } from "./core/Tetris";
+import { TetrisSocket } from "./websocket/Socket";
+import { TetrisSocketServer } from "./websocket/Server";
 
-const SPACE = " ";
+dotenv.config({ path: `${__dirname}/.env` });
 
-const server = new WebSocketServer({ port: 8080 });
+const server = new TetrisSocketServer({ port: process.env.PORT });
 
 server.on("connection", (socket) => {
-  /* Sends the initial game state on open */
-  let active = true;
-  let game = new Tetris();
-  let state = game.updateGameStates();
-  let timeout: NodeJS.Timeout | null = null;
+  const id = nanoid();
 
-  socket.send(JSON.stringify(state));
-
-  /* Sends the updated game state after an interval */
-  const gameTimeout = () => {
-    if (active) {
-      state = game.updateGameStates(Command.Down);
-
-      socket.send(JSON.stringify(state));
-
-      if (state.gameOver) {
-        active = false;
-      }
-    }
-
-    /* We use setTimeout recursively to simulate a dynamic interval */
-    timeout = setTimeout(gameTimeout, state.gameInterval);
-  };
-
-  timeout = setTimeout(gameTimeout, state.gameInterval);
-
-  socket.on("message", (data) => {
-    const input = data.toString();
-
-    switch (input) {
-      case "ToggleGame": {
-        active = !active;
-
-        break;
-      }
-      case "Restart": {
-        game = new Tetris();
-        state = game.updateGameStates();
-
-        socket.send(JSON.stringify(state));
-
-        break;
-      }
-      default: {
-        if (state.gameOver) return;
-
-        /* Sends the updated game state after registering an input */
-        socket.send(JSON.stringify(game.inputHandle(input)));
-
-        if (input !== SPACE || !timeout) return;
-
-        clearTimeout(timeout);
-
-        timeout = setTimeout(gameTimeout, state.gameInterval);
-      }
-    }
-  });
+  server.sockets.set(id, new TetrisSocket(id, socket, new Tetris()));
 });

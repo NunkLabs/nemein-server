@@ -11,7 +11,8 @@ export const MAX_SPAWNED_TETROMINOS = 6;
 export const WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX = 3;
 export const WALL_KICK_IMPOSSIBLE_CASE_T_Z_INDEX = 2;
 export const JLSTZ_WALL_KICK_COR_OFFSETS = [
-  [/* O --> R */
+  [
+    /* O --> R */
     [
       [0, 0],
       [-1, 0],
@@ -26,7 +27,7 @@ export const JLSTZ_WALL_KICK_COR_OFFSETS = [
       [1, -1],
       [0, 2],
       [1, 2],
-    ]
+    ],
   ],
   [
     /* R --> Z */
@@ -44,7 +45,7 @@ export const JLSTZ_WALL_KICK_COR_OFFSETS = [
       [1, 1],
       [0, -2],
       [1, -2],
-    ]
+    ],
   ],
   [
     /* Z --> L */
@@ -81,11 +82,12 @@ export const JLSTZ_WALL_KICK_COR_OFFSETS = [
       [0, -2],
       [-1, -2],
     ],
-  ]
+  ],
 ];
 
 export const I_WALL_KICK_COR_OFFSETS = [
-  [/* O --> R */
+  [
+    /* O --> R */
     [
       [1, 0],
       [-1, 0],
@@ -100,7 +102,7 @@ export const I_WALL_KICK_COR_OFFSETS = [
       [2, 1],
       [-1, -1],
       [2, 2],
-    ]
+    ],
   ],
   [
     /* R --> Z */
@@ -118,7 +120,7 @@ export const I_WALL_KICK_COR_OFFSETS = [
       [-2, 0],
       [1, 1],
       [-2, 2],
-    ]
+    ],
   ],
   [
     /* Z --> L */
@@ -155,7 +157,7 @@ export const I_WALL_KICK_COR_OFFSETS = [
       [-1, 1],
       [2, -2],
     ],
-  ]
+  ],
 ];
 
 /* Tetromino const arrays */
@@ -614,13 +616,16 @@ export class TetrominoManager {
   ): number[][] {
     let ret: number[][] = [];
 
-    if (type !== TetrominoType.Blank &&
-      type !== TetrominoType.Ghost) {
+    if (type !== TetrominoType.Blank && type !== TetrominoType.Ghost) {
       /* I Tetromino's wall kick offsets are different */
-      ret = type === TetrominoType.I ?
-        JSON.parse(JSON.stringify(I_WALL_KICK_COR_OFFSETS[rotation][direction])) :
-        JSON.parse(JSON.stringify(
-          JLSTZ_WALL_KICK_COR_OFFSETS[rotation][direction]));
+      ret =
+        type === TetrominoType.I
+          ? JSON.parse(
+              JSON.stringify(I_WALL_KICK_COR_OFFSETS[rotation][direction])
+            )
+          : JSON.parse(
+              JSON.stringify(JLSTZ_WALL_KICK_COR_OFFSETS[rotation][direction])
+            );
       if (type === TetrominoType.T) {
         if (rotation === TetrominoRotation.O) {
           ret.splice(WALL_KICK_IMPOSSIBLE_CASE_T_O_INDEX, 1);
@@ -629,9 +634,11 @@ export class TetrominoManager {
         }
       } else if (type === TetrominoType.Square) {
         /* In case of the Square Tetromino, wall kick offset is always (0,0) */
-        for (let popIdx = 0;
+        for (
+          let popIdx = 0;
           popIdx < SQUARE_TETROMINO_NUM_TESTS_TO_REMOVE;
-          popIdx += 1) {
+          popIdx += 1
+        ) {
           ret.pop();
         }
       }
