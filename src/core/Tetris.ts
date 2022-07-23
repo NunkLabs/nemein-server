@@ -29,7 +29,7 @@ export const Z_KEY = "z";
 export const SHIFT = "Shift";
 export const CTRL = "Control";
 
-/* FIXME: This is might not be correct */
+/* FIXME: This might not be correct */
 export const NUMPAD_9 = "9";
 export const NUMPAD_8 = "8";
 export const NUMPAD_7 = "7";
@@ -45,11 +45,11 @@ export const KEYBOARD_EVENT = "keydown";
 
 /* Timer consts */
 export const DEFAULT_TIME_INTERVAL_MS = 1000;
-export const EARLY_LEVEL_MULTIPLIER = 60;
-export const LATE_LEVEL_MULTIPLIER = 0.5;
-export const INTERVAL_CAP = 900;
-export const LEVEL_UP_TETROMINOS_COUNT = 10;
+export const MS_PER_S = 1000;
 export const LOCK_DELAY_MS = 500;
+
+/* Level consts */
+export const VARIABLE_GOAL_MULTIPLIER = 5;
 
 /* Enum types */
 export enum Command {
@@ -61,6 +61,13 @@ export enum Command {
   HardDrop,
   HoldTetromino,
 }
+export enum LineValue {
+  None = 0,
+  Single = 1,
+  Double = 2,
+  Triple = 3,
+  Tetris = 4,
+};
 
 export type TetrisStates = {
   corX: number;
@@ -99,13 +106,22 @@ export class Tetris {
 
   private score: number;
 
-  private tetrominosCount: number;
+  /* Available for integration into TetrisStates and render on client */
+  private linesCleared: number;
 
   private level: number;
 
   private gameInterval: number;
 
-  constructor(
+  private isTspin: boolean;
+
+  private wasPreviouslyTetris: boolean;
+
+  private isLockDelayEnabled: boolean;
+
+  private prevGameInterval: number;
+
+  constructor (
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
     dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO,
@@ -122,12 +138,16 @@ export class Tetris {
     this.initRender = true;
     this.gameOver = false;
     this.score = 0;
-    this.tetrominosCount = 0;
+    this.linesCleared = 0;
     this.level = 1;
     this.gameInterval =
       process.env.NODE_ENV === "test" && dbgOverwriteTimer
         ? 0
         : DEFAULT_TIME_INTERVAL_MS;
+    this.isTspin = false;
+    this.wasPreviouslyTetris = false;
+    this.isLockDelayEnabled = false;
+    this.prevGameInterval = DEFAULT_TIME_INTERVAL_MS;
 
     this.initNewGame();
   }
@@ -190,6 +210,27 @@ export class Tetris {
           testRotate
         )
       ) {
+        /* Detecting T-Spin. If the current Tetromino T is under lock-delay AND
+        cannot rotate, we consider the next rotation to be a T-Spin move */
+        if (this.isLockDelayEnabled && activeTetromino.type === TetrominoType.T) {
+          const isAbleToMoveHorizontally =
+            this.board.isTetrominoRenderable(
+              false,
+              this.corX + 1,
+              this.corY,
+              activeTetromino.type,
+              activeTetromino.rotation
+            ) ||
+            this.board.isTetrominoRenderable(
+              false,
+              this.corX - 1,
+              this.corY,
+              activeTetromino.type,
+              activeTetromino.rotation
+            );
+          this.isTspin = !isAbleToMoveHorizontally;
+        }
+
         this.corX = testCorX;
         this.corY = testCorY;
         const newActiveTetromino: Tetromino = {
@@ -216,6 +257,7 @@ export class Tetris {
     );
 
     const numLinesCompleted = this.board.clearLines();
+    this.linesCleared += numLinesCompleted;
 
     /* Prepare new tetromino for the next board update */
     activeTetromino = this.tetrominoManager.getNewTetromino();
@@ -233,29 +275,44 @@ export class Tetris {
      * Update score, tetrominos count, level and interval
      *
      * Updating scheme as follow:
-     *  - Tetromino count: Increases by 1
-     *  - Level: Increases by 1 after everytime the tetromino count is increased
-     *      by LEVEL_UP_TETROMINOS_COUNT
-     *  - Score: Increments with the current level
-     *  - Game interval: We calculate the amount of time to subtract from the
-     *      default game interval (DEFAULT_TIME_INTERVAL_MS) based on the
-     *      current level
+     *  - Score: Increments based on Tetris World's rules (see
+     *      https://tetris.fandom.com/wiki/Tetris_Worlds)
+     *  - Reset previously Tetris & T-spin flag if was previously enabled
+     *  - Level: Increments by 1 after everytime current score reaches/exceeds
+     *      the value of current level * VARIABLE_GOAL_MULTIPLIER (default is 5)
+     *  - Game interval: Based on Tetris World's formula (see
+     *      https://tetris.fandom.com/wiki/Tetris_Worlds)
      */
-    this.tetrominosCount += 1;
-    /* TODO: Add a more complex scoring system */
-    this.level =
-      1 + Math.floor(this.tetrominosCount / LEVEL_UP_TETROMINOS_COUNT);
-    this.score += numLinesCompleted * this.level;
-
-    let newGameIntervalDecrease = this.level * EARLY_LEVEL_MULTIPLIER;
-    if (newGameIntervalDecrease > INTERVAL_CAP) {
-      newGameIntervalDecrease =
-        INTERVAL_CAP + this.level * LATE_LEVEL_MULTIPLIER;
-      if (newGameIntervalDecrease >= DEFAULT_TIME_INTERVAL_MS) {
-        newGameIntervalDecrease = DEFAULT_TIME_INTERVAL_MS;
-      }
+    let currTetris = false;
+    switch (numLinesCompleted) {
+      case LineValue.None:
+        this.score = this.isTspin ? this.score + 1 : this.score;
+        break
+      case LineValue.Single:
+        this.score = this.isTspin ? this.score + 3 : this.score + 1;
+        break;
+      case LineValue.Double:
+        this.score = this.isTspin ? this.score + 7 : this.score + 3;
+        break;
+      case LineValue.Triple:
+        this.score = this.isTspin ? this.score + 6 : this.score + 5;
+        break;
+      case LineValue.Tetris:
+        currTetris = true;
+        this.score = this.wasPreviouslyTetris ? this.score + 12 : this.score + 8;
+        break;
+      default:
+        break;
     }
-    this.gameInterval = DEFAULT_TIME_INTERVAL_MS - newGameIntervalDecrease;
+
+    this.wasPreviouslyTetris = currTetris;
+    this.isTspin = false;
+    if (this.score >= this.level * VARIABLE_GOAL_MULTIPLIER) {
+      this.level += 1;
+    }
+    this.gameInterval = (0.8 - ((this.level - 1) * 0.007)) ** (this.level - 1)
+      * MS_PER_S;
+    this.isLockDelayEnabled = false;
 
     /* Check if game is over */
     if (
@@ -375,6 +432,14 @@ export class Tetris {
               activeTetromino.rotation
             );
             if (yAddValid) {
+              /* If lock-delay was enabled, getting here means that the user
+              has managed to get the current Tetromino out of the blocked state
+              within the 500ms delay. We then resume the Tetromino's state to
+              its normal state and restore the previous game interval */
+              if (this.isLockDelayEnabled) {
+                this.isLockDelayEnabled = false;
+                this.gameInterval = this.prevGameInterval;
+              }
               this.corY = testCorY;
             }
             break;
@@ -439,11 +504,14 @@ export class Tetris {
              */
             return this.updateGameStates(Command.Down);
           }
-        } else if (
-          this.corY === this.ghostCorY &&
-          this.gameInterval < LOCK_DELAY_MS
-        ) {
-          this.gameInterval = LOCK_DELAY_MS;
+        } /* Lock-delay handling once Tetromino is about to be blocked */
+        else if (this.corY === this.ghostCorY &&
+          !this.isLockDelayEnabled &&
+          command !== Command.HardDrop) {
+          this.prevGameInterval = this.gameInterval;
+          this.gameInterval = (this.gameInterval < LOCK_DELAY_MS) ?
+            LOCK_DELAY_MS : this.gameInterval;
+          this.isLockDelayEnabled = true;
         }
       }
     }
