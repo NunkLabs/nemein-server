@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
-    "lib": ["esnext"],
-    "module": "commonjs",
+    "lib": ["es2022"],
+    "module": "es2022",
     "target": "es2022",
 
+    "moduleResolution": "node16",
     "strict": true,
-    "esModuleInterop": true,
     "skipLibCheck": true,
     "removeComments": true,
 
     "outDir": "./dist"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "ts-node": {
+    "esm": true
+  }
 }

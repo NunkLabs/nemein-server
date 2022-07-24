@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 
-import { TetrisSocket } from "./Socket";
+import { TetrisSocket } from "./Socket.js";
 
 const LAST_SEEN_DURATION = 120000;
 const SWEEP_INTERVAL = 60000;

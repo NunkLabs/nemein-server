@@ -1,11 +1,11 @@
 import * as dotenv from "dotenv";
 import { nanoid } from "nanoid";
 
-import { Tetris } from "./core/Tetris";
-import { TetrisSocket } from "./websocket/Socket";
-import { TetrisSocketServer } from "./websocket/Server";
+import { Tetris } from "./core/Tetris.js";
+import { TetrisSocket } from "./websocket/Socket.js";
+import { TetrisSocketServer } from "./websocket/Server.js";
 
-dotenv.config({ path: `${__dirname}/.env` });
+dotenv.config();
 
 const server = new TetrisSocketServer({ port: process.env.PORT });
 

@@ -11,7 +11,7 @@ import {
   TetrominoRotation,
   TetrominoType,
   TetrominoRotateDirection,
-} from "../src/core/TetrominoManager";
+} from "../src/core/TetrominoManager.js";
 
 describe("TetrominoManager", () => {
   describe("Test initilization", () => {
