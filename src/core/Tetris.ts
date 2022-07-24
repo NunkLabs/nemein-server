@@ -4,7 +4,7 @@ import {
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
   TetrisCol,
-} from "./TetrisBoard";
+} from "./TetrisBoard.js";
 
 import {
   X_INDEX,
@@ -15,7 +15,7 @@ import {
   TetrominoManager,
   Tetromino,
   TetrominoRotateDirection,
-} from "./TetrominoManager";
+} from "./TetrominoManager.js";
 
 /* Keyboard event consts */
 export const ARROW_DOWN = "ArrowDown";
@@ -67,7 +67,7 @@ export enum LineValue {
   Double = 2,
   Triple = 3,
   Tetris = 4,
-};
+}
 
 export type TetrisStates = {
   corX: number;
@@ -121,7 +121,7 @@ export class Tetris {
 
   private prevGameInterval: number;
 
-  constructor (
+  constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
     dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO,
@@ -212,7 +212,10 @@ export class Tetris {
       ) {
         /* Detecting T-Spin. If the current Tetromino T is under lock-delay AND
         cannot rotate, we consider the next rotation to be a T-Spin move */
-        if (this.isLockDelayEnabled && activeTetromino.type === TetrominoType.T) {
+        if (
+          this.isLockDelayEnabled &&
+          activeTetromino.type === TetrominoType.T
+        ) {
           const isAbleToMoveHorizontally =
             this.board.isTetrominoRenderable(
               false,
@@ -287,7 +290,7 @@ export class Tetris {
     switch (numLinesCompleted) {
       case LineValue.None:
         this.score = this.isTspin ? this.score + 1 : this.score;
-        break
+        break;
       case LineValue.Single:
         this.score = this.isTspin ? this.score + 3 : this.score + 1;
         break;
@@ -299,7 +302,9 @@ export class Tetris {
         break;
       case LineValue.Tetris:
         currTetris = true;
-        this.score = this.wasPreviouslyTetris ? this.score + 12 : this.score + 8;
+        this.score = this.wasPreviouslyTetris
+          ? this.score + 12
+          : this.score + 8;
         break;
       default:
         break;
@@ -310,8 +315,8 @@ export class Tetris {
     if (this.score >= this.level * VARIABLE_GOAL_MULTIPLIER) {
       this.level += 1;
     }
-    this.gameInterval = (0.8 - ((this.level - 1) * 0.007)) ** (this.level - 1)
-      * MS_PER_S;
+    this.gameInterval =
+      (0.8 - (this.level - 1) * 0.007) ** (this.level - 1) * MS_PER_S;
     this.isLockDelayEnabled = false;
 
     /* Check if game is over */
@@ -504,13 +509,16 @@ export class Tetris {
              */
             return this.updateGameStates(Command.Down);
           }
-        } /* Lock-delay handling once Tetromino is about to be blocked */
-        else if (this.corY === this.ghostCorY &&
+        } /* Lock-delay handling once Tetromino is about to be blocked */ else if (
+          this.corY === this.ghostCorY &&
           !this.isLockDelayEnabled &&
-          command !== Command.HardDrop) {
+          command !== Command.HardDrop
+        ) {
           this.prevGameInterval = this.gameInterval;
-          this.gameInterval = (this.gameInterval < LOCK_DELAY_MS) ?
-            LOCK_DELAY_MS : this.gameInterval;
+          this.gameInterval =
+            this.gameInterval < LOCK_DELAY_MS
+              ? LOCK_DELAY_MS
+              : this.gameInterval;
           this.isLockDelayEnabled = true;
         }
       }

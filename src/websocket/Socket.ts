@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 
-import { Command, Tetris, TetrisStates } from "../core/Tetris";
+import { Command, Tetris, TetrisStates } from "../core/Tetris.js";
 
 const DEFAULT_WS_CLOSURE = 1000;
 const DEFAULT_HEARTBEAT_INTERVAL = 30000;

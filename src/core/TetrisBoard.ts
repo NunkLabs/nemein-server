@@ -5,7 +5,7 @@ import {
   TetrominoManager,
   TetrominoRotation,
   TetrominoType,
-} from "./TetrominoManager";
+} from "./TetrominoManager.js";
 
 /* Misc consts */
 export const Y_START = 0;
