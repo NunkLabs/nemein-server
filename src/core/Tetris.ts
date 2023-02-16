@@ -460,6 +460,8 @@ export class Tetris {
               this.corX = Math.floor(this.boardWidth / 2);
               this.corY = Y_START;
               this.onHold = true;
+              this.isLockDelayEnabled = false;
+              this.gameInterval = this.prevGameInterval;
             }
             break;
           }
