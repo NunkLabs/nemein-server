@@ -1,6 +1,7 @@
 import { WebSocketServer } from "ws";
 
 import { TetrisSocket } from "./Socket.js";
+import logger from "../utils/Logger.js";
 
 const LAST_SEEN_DURATION = 120000;
 const SWEEP_INTERVAL = 60000;
@@ -27,6 +28,10 @@ export class TetrisSocketServer extends WebSocketServer {
         socket.destroy();
 
         this.sockets.delete(socket.id);
+
+        logger.info(
+          `[Socket]: Connection ended with client (ID: ${socket.id})`
+        );
       });
     }, SWEEP_INTERVAL);
   }
