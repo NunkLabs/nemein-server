@@ -17,6 +17,8 @@ import {
   TetrominoRotateDirection,
 } from "./TetrominoManager.js";
 
+import logger from "../utils/Logger.js";
+
 /* Keyboard event consts */
 export const ARROW_DOWN = "ArrowDown";
 export const ARROW_LEFT = "ArrowLeft";
@@ -49,7 +51,7 @@ export const MS_PER_S = 1000;
 export const LOCK_DELAY_MS = 500;
 
 /* Level consts */
-export const VARIABLE_GOAL_MULTIPLIER = 5;
+export const VARIABLE_GOAL_MULTIPLIER = 10;
 
 /* Enum types */
 export enum Command {
@@ -282,39 +284,50 @@ export class Tetris {
      *      https://tetris.fandom.com/wiki/Tetris_Worlds)
      *  - Reset previously Tetris & T-spin flag if was previously enabled
      *  - Level: Increments by 1 after everytime current score reaches/exceeds
-     *      the value of current level * VARIABLE_GOAL_MULTIPLIER (default is 5)
+     *      the value of current level * VARIABLE_GOAL_MULTIPLIER (default is 10).
+     *      By default this value is 5 but it progresses too fast
      *  - Game interval: Based on Tetris World's formula (see
      *      https://tetris.fandom.com/wiki/Tetris_Worlds)
      */
     let currTetris = false;
+    let scoreToAdd = 0;
     switch (numLinesCompleted) {
       case LineValue.None:
-        this.score = this.isTspin ? this.score + 1 : this.score;
+        scoreToAdd = this.isTspin ? 1 : 0;
         break;
       case LineValue.Single:
-        this.score = this.isTspin ? this.score + 3 : this.score + 1;
+        scoreToAdd = this.isTspin ? 3 : 1;
         break;
       case LineValue.Double:
-        this.score = this.isTspin ? this.score + 7 : this.score + 3;
+        scoreToAdd = this.isTspin ? 7 : 3;
         break;
       case LineValue.Triple:
-        this.score = this.isTspin ? this.score + 6 : this.score + 5;
+        scoreToAdd = this.isTspin ? 6 : 5;
         break;
       case LineValue.Tetris:
         currTetris = true;
-        this.score = this.wasPreviouslyTetris
-          ? this.score + 12
-          : this.score + 8;
+        scoreToAdd = this.wasPreviouslyTetris ? 12 : 8;
         break;
       default:
         break;
     }
 
+    this.score += scoreToAdd;
+
     this.wasPreviouslyTetris = currTetris;
     this.isTspin = false;
-    if (this.score >= this.level * VARIABLE_GOAL_MULTIPLIER) {
-      this.level += 1;
+
+    let testLvl = this.level;
+    for (;;) {
+      if (this.score < testLvl * VARIABLE_GOAL_MULTIPLIER) {
+        if (testLvl !== 1) {
+          this.level = testLvl - 1;
+        }
+        break;
+      }
+      testLvl += 1;
     }
+
     this.gameInterval =
       (0.8 - (this.level - 1) * 0.007) ** (this.level - 1) * MS_PER_S;
     this.isLockDelayEnabled = false;
@@ -498,6 +511,10 @@ export class Tetris {
           activeTetromino.type
         );
 
+        if (this.gameInterval !== LOCK_DELAY_MS) {
+          this.prevGameInterval = this.gameInterval;
+        }
+
         /* Handling blocked movement */
         if (!yAddValid) {
           this.handleBlockedMovement();
@@ -516,7 +533,6 @@ export class Tetris {
           !this.isLockDelayEnabled &&
           command !== Command.HardDrop
         ) {
-          this.prevGameInterval = this.gameInterval;
           this.gameInterval =
             this.gameInterval < LOCK_DELAY_MS
               ? LOCK_DELAY_MS
@@ -525,6 +541,10 @@ export class Tetris {
         }
       }
     }
+
+    logger.debug(
+      `[Tetris] This tick's interval: ${this.gameInterval}ms (Level: ${this.level})`
+    );
 
     return {
       corX: this.corX,
