@@ -181,19 +181,22 @@ export class Tetris {
       rotateDirection === TetrominoRotateDirection.Clockwise
         ? activeTetromino.rotation + 1
         : activeTetromino.rotation - 1;
+    /* Wrap around if reaching rotations limits */
     if (testRotate >= TetrominoRotation.NumTetrominoRotations) {
       testRotate = TetrominoRotation.O;
     } else if (testRotate < TetrominoRotation.O) {
       testRotate = TetrominoRotation.L;
     }
 
+    /**
+     * We'll test to see if the rotation is valid by using
+     * SRS's wall-kick testing (https://harddrop.com/wiki/SRS)
+     */
     const testOffsetArr = TetrominoManager.getTetrominoWallKickOffsets(
       activeTetromino.type,
       activeTetromino.rotation,
       rotateDirection
     );
-
-    /* SRS's wall-kick testing (https://harddrop.com/wiki/SRS) */
     for (
       let testOffsetIdx = 0;
       testOffsetIdx < testOffsetArr.length;
@@ -203,6 +206,10 @@ export class Tetris {
       const testCorX = this.corX + testOffset[X_INDEX];
       const testCorY = this.corY + testOffset[Y_INDEX];
 
+      /**
+       * We'll evalute the first renderable tetromino and if it's valid,
+       * we'll use this rotation's wall kick
+       */
       if (
         this.board.isTetrominoRenderable(
           false,
@@ -212,8 +219,13 @@ export class Tetris {
           testRotate
         )
       ) {
-        /* Detecting T-Spin. If the current Tetromino T is under lock-delay AND
-        cannot rotate, we consider the next rotation to be a T-Spin move */
+        /**
+         * Detecting T-Spin
+         * A T-Spin is valid if it satisfies the following 3 requirements:
+         * 1. Current tetromino is a T
+         * 2. Current tetromino is under lock-delay
+         * 3. Current tetromino cannot move horizontally
+         */
         if (
           this.isLockDelayEnabled &&
           activeTetromino.type === TetrominoType.T
@@ -236,6 +248,7 @@ export class Tetris {
           this.isTspin = !isAbleToMoveHorizontally;
         }
 
+        /* Update the current tetromino for next tick's render */
         this.corX = testCorX;
         this.corY = testCorY;
         const newActiveTetromino: Tetromino = {
@@ -260,9 +273,6 @@ export class Tetris {
       activeTetromino.type,
       activeTetromino.rotation
     );
-
-    const numLinesCompleted = this.board.clearLines();
-    this.linesCleared += numLinesCompleted;
 
     /* Prepare new tetromino for the next board update */
     activeTetromino = this.tetrominoManager.getNewTetromino();
@@ -289,6 +299,8 @@ export class Tetris {
      *  - Game interval: Based on Tetris World's formula (see
      *      https://tetris.fandom.com/wiki/Tetris_Worlds)
      */
+    const numLinesCompleted = this.board.clearLines();
+    this.linesCleared += numLinesCompleted;
     let currTetris = false;
     let scoreToAdd = 0;
     switch (numLinesCompleted) {
@@ -311,12 +323,13 @@ export class Tetris {
       default:
         break;
     }
-
     this.score += scoreToAdd;
 
-    this.wasPreviouslyTetris = currTetris;
-    this.isTspin = false;
-
+    /**
+     * Determine the next level. In case the user manages to scores
+     * a value which passes the next level's threshold, this logic
+     * is necessary to set the level correct in a single tick
+     */
     let testLvl = this.level;
     for (;;) {
       if (this.score < testLvl * VARIABLE_GOAL_MULTIPLIER) {
@@ -331,6 +344,8 @@ export class Tetris {
     this.gameInterval =
       (0.8 - (this.level - 1) * 0.007) ** (this.level - 1) * MS_PER_S;
     this.isLockDelayEnabled = false;
+    this.wasPreviouslyTetris = currTetris;
+    this.isTspin = false;
 
     /* Check if game is over */
     if (
@@ -483,6 +498,7 @@ export class Tetris {
              * Here for supressing errors. We should never reach here as the input
              * should've been already sanitized by this point
              */
+            logger.error(`[Tetris] Unknown command ${command}`);
             break;
           }
         }
@@ -511,12 +527,16 @@ export class Tetris {
           activeTetromino.type
         );
 
+        /**
+         * We'll have to continuously store the game interval to restore it
+         * correctly when corner cases happen (i.e. lock delay + tetromino hold)
+         */
         if (this.gameInterval !== LOCK_DELAY_MS) {
           this.prevGameInterval = this.gameInterval;
         }
 
-        /* Handling blocked movement */
         if (!yAddValid) {
+          /* Handling blocked movement */
           this.handleBlockedMovement();
           /* Game over */
           if (!this.gameOver) {
@@ -528,11 +548,12 @@ export class Tetris {
              */
             return this.updateGameStates(Command.Down);
           }
-        } /* Lock-delay handling once Tetromino is about to be blocked */ else if (
+        } else if (
           this.corY === this.ghostCorY &&
           !this.isLockDelayEnabled &&
           command !== Command.HardDrop
         ) {
+          /* Lock-delay handling once Tetromino is about to be blocked */
           this.gameInterval =
             this.gameInterval < LOCK_DELAY_MS
               ? LOCK_DELAY_MS
@@ -617,6 +638,7 @@ export class Tetris {
         retCommand = Command.HoldTetromino;
         break;
       default:
+        logger.error(`[Tetris] Unknown input ${key}`);
         break;
     }
 
