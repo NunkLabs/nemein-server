@@ -3,7 +3,7 @@ import { WebSocket } from "ws";
 import { Command, Tetris } from "../core/Tetris.js";
 
 const DEFAULT_WS_CLOSURE = 1000;
-const DEFAULT_HEARTBEAT_INTERVAL = 30000;
+const DEFAULT_HEARTBEAT_INTERVAL = 5000;
 const SPACE = " ";
 
 const Opcodes = {
@@ -136,6 +136,11 @@ export class TetrisSocket {
         case Opcodes.HEARTBEAT: {
           /* Updates the last seen timestamp */
           this.timestamp = Date.now();
+
+          this.send({
+            op: Opcodes.HEARTBEAT,
+            timestamp: message.timestamp,
+          });
 
           break;
         }
