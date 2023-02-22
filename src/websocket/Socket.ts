@@ -3,7 +3,7 @@ import { WebSocket } from "ws";
 import { Command, Tetris } from "../core/Tetris.js";
 
 const DEFAULT_WS_CLOSURE = 1000;
-const DEFAULT_HEARTBEAT_INTERVAL = 5000;
+const DEFAULT_HEARTBEAT_INTERVAL_MS = 5000;
 const SPACE = " ";
 
 const Opcodes = {
@@ -55,7 +55,7 @@ export class TetrisSocket {
     this.send({
       op: Opcodes.OPEN,
       timestamp: Date.now(),
-      heartbeat: DEFAULT_HEARTBEAT_INTERVAL,
+      heartbeat: DEFAULT_HEARTBEAT_INTERVAL_MS,
     });
 
     this.active = true;
