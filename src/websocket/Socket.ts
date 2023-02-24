@@ -70,7 +70,7 @@ export class TetrisSocket {
     /* Sends updated game states after an interval */
     const timeout = () => {
       if (this.active) {
-        gameState = gameInstance.updateGameStates(Command.Down);
+        gameState = gameInstance.updateGameStates(Command.TickDown);
 
         this.send({
           op: Opcodes.DATA,
