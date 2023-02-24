@@ -19,7 +19,7 @@ const Opcodes = {
 
 type SocketData = {
   op: number;
-  timestamp: number;
+  timestamp?: number;
   data?: object | string;
   heartbeat?: number;
 };
@@ -54,7 +54,6 @@ export class TetrisSocket {
     /* Sends the initial game  and specify client's heartbeat */
     this.send({
       op: Opcodes.OPEN,
-      timestamp: Date.now(),
       heartbeat: DEFAULT_HEARTBEAT_INTERVAL_MS,
     });
 
@@ -65,7 +64,6 @@ export class TetrisSocket {
 
     this.send({
       op: Opcodes.READY,
-      timestamp: Date.now(),
       data: gameState,
     });
 
@@ -76,7 +74,6 @@ export class TetrisSocket {
 
         this.send({
           op: Opcodes.DATA,
-          timestamp: Date.now(),
           data: gameState,
         });
 
@@ -107,7 +104,6 @@ export class TetrisSocket {
 
           this.send({
             op: Opcodes.DATA,
-            timestamp: Date.now(),
             data: gameState,
           });
 
@@ -120,7 +116,6 @@ export class TetrisSocket {
           /* Sends the updated game state after registering an input */
           this.send({
             op: Opcodes.DATA,
-            timestamp: Date.now(),
             data: gameInstance.inputHandle(message.data),
           });
 
