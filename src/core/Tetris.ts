@@ -47,11 +47,13 @@ export const KEYBOARD_EVENT = "keydown";
 
 /* Timer consts */
 export const DEFAULT_TIME_INTERVAL_MS = 1000;
-export const MS_PER_S = 1000;
 export const LOCK_DELAY_MS = 500;
 
 /* Level consts */
 export const VARIABLE_GOAL_MULTIPLIER = 10;
+
+/* Misc const */
+export const DEFAULT_NUM_TICKS_PER_GREY_LINE_SPAWNED = 10;
 
 /* Enum types */
 export enum Command {
@@ -59,6 +61,7 @@ export enum Command {
   Right,
   ClockwiseRotate,
   CounterclockwiseRotate,
+  TickDown,
   Down,
   HardDrop,
   HoldTetromino,
@@ -123,6 +126,10 @@ export class Tetris {
 
   private prevGameInterval: number;
 
+  private numTicks: number;
+
+  private ticksPerGreyLineSpawned: number;
+
   constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
@@ -150,6 +157,8 @@ export class Tetris {
     this.wasPreviouslyTetris = false;
     this.isLockDelayEnabled = false;
     this.prevGameInterval = DEFAULT_TIME_INTERVAL_MS;
+    this.numTicks = 0;
+    this.ticksPerGreyLineSpawned = DEFAULT_NUM_TICKS_PER_GREY_LINE_SPAWNED;
 
     this.initNewGame();
   }
@@ -263,8 +272,12 @@ export class Tetris {
 
   /**
    * @brief: handleBlockedMovement: Handler for blocked movements
+   *
+   * @return true if game is over. False otw
    */
-  private handleBlockedMovement(): void {
+  private handleBlockedMovement(): boolean {
+    let ret = true;
+
     /* Update the lowest pixel for each column */
     let activeTetromino = this.tetrominoManager.getActiveTetromino();
     this.board.updateColLowestY(
@@ -287,7 +300,7 @@ export class Tetris {
     this.onHold = false;
 
     /**
-     * Update score, tetrominos count, level and interval
+     * Update score, tetrominos count, level and difficulty
      *
      * Updating scheme as follow:
      *  - Score: Increments based on Tetris World's rules (see
@@ -296,10 +309,17 @@ export class Tetris {
      *  - Level: Increments by 1 after everytime current score reaches/exceeds
      *      the value of current level * VARIABLE_GOAL_MULTIPLIER (default is 10).
      *      By default this value is 5 but it progresses too fast
-     *  - Game interval: Based on Tetris World's formula (see
-     *      https://tetris.fandom.com/wiki/Tetris_Worlds)
+     *  -Difficulty:
+     *      Spawn 1 new challenge line after every x ticks
+     *      Number of ticks per spawn (x) will decrease (scaled by game level)
      */
-    const numLinesCompleted = this.board.clearLines();
+
+    /* We first calculate dmg (if any) dealt by the user by forming lines */
+    const info = this.board.calculateDmgPool();
+
+    /* Then we attempt to clear these lines given the damage pool we calcuated */
+    const numLinesCompleted = this.board.clearLines(info);
+
     this.linesCleared += numLinesCompleted;
     let currTetris = false;
     let scoreToAdd = 0;
@@ -332,17 +352,16 @@ export class Tetris {
      */
     let testLvl = this.level;
     for (;;) {
-      if (this.score < testLvl * VARIABLE_GOAL_MULTIPLIER) {
-        if (testLvl !== 1) {
-          this.level = testLvl - 1;
+      if (this.score < testLvl * VARIABLE_GOAL_MULTIPLIER && testLvl !== 1) {
+        const lvlToSet = testLvl - 1;
+        if (lvlToSet !== this.level && this.ticksPerGreyLineSpawned !== 1) {
+          this.ticksPerGreyLineSpawned -= 1;
         }
+        this.level = lvlToSet;
         break;
       }
       testLvl += 1;
     }
-
-    this.gameInterval =
-      (0.8 - (this.level - 1) * 0.007) ** (this.level - 1) * MS_PER_S;
     this.isLockDelayEnabled = false;
     this.wasPreviouslyTetris = currTetris;
     this.isTspin = false;
@@ -358,7 +377,10 @@ export class Tetris {
       )
     ) {
       this.gameOver = true;
+      ret = false;
     }
+
+    return ret;
   }
 
   /**
@@ -455,6 +477,18 @@ export class Tetris {
             this.handleRotation(TetrominoRotateDirection.Counterclockwise);
             break;
           }
+          case Command.TickDown: {
+            /**
+             * This command is technically Command.Down but with the addition for
+             * increasing the number of ticks and spawning challenge lines
+             * if certain ticks conditions are met
+             */
+            this.numTicks = (this.numTicks + 1) % this.ticksPerGreyLineSpawned;
+            if (this.numTicks === 0) {
+              this.board.spawnChallengeLine();
+            }
+            /* Fallthrough */
+          }
           case Command.Down: {
             testCorY = this.corY + 1;
             yAddValid = this.board.isTetrominoRenderable(
@@ -535,20 +569,18 @@ export class Tetris {
           this.prevGameInterval = this.gameInterval;
         }
 
-        if (!yAddValid) {
-          /* Handling blocked movement */
-          this.handleBlockedMovement();
-          /* Game over */
-          if (!this.gameOver) {
-            /**
-             * TBS-36: Getting new tetromino to spawn immediately
-             * This recursive call should not affect performance as we'd fall in
-             * the init handling section of this function - which should return
-             * anyway
-             */
-            return this.updateGameStates(Command.Down);
-          }
-        } else if (
+        if (!yAddValid && this.handleBlockedMovement()) {
+          /**
+           * Handling blocked movement
+           *
+           * TBS-36: Getting new tetromino to spawn immediately
+           * This recursive call should not affect performance as we'd fall in
+           * the init handling section of this function - which should return
+           * anyway
+           */
+          return this.updateGameStates(Command.TickDown);
+        }
+        if (
           this.corY === this.ghostCorY &&
           !this.isLockDelayEnabled &&
           command !== Command.HardDrop
@@ -636,6 +668,8 @@ export class Tetris {
       /* Fallthrough */
       case SHIFT:
         retCommand = Command.HoldTetromino;
+        break;
+      case ARROW_DOWN:
         break;
       default:
         logger.error(`[Tetris] Unknown input ${key}`);

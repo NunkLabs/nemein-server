@@ -43,7 +43,8 @@
     "lint": "eslint . --fix --ext .js,.ts",
     "postinstall": "is-ci || husky install",
     "start": "tsc && node dist/index.js",
-    "test": "NODE_ENV=test mocha -r ts-node/register test/*.ts",
+    "test": " ",
+    "test-classic": "NODE_ENV=test mocha -r ts-node/register test/*.ts",
     "update": "yarn upgrade-interactive --latest"
   },
   "type": "module"

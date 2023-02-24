@@ -401,6 +401,7 @@ export enum TetrominoType {
   L,
   Z,
   S,
+  Grey,
   Ghost,
   NumTetrominoTypes,
 }

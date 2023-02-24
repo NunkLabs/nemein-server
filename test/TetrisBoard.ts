@@ -59,7 +59,7 @@ describe("TetrisBoard", () => {
           const col = testField[x].colArr;
           for (let y = 0; y < DEFAULT_BOARD_HEIGHT; y += 1) {
             assert.strictEqual(
-              col[y],
+              col[y].type,
               TetrominoType.Blank,
               `Pixel ${x} on row ${y} is not blank`
             );
@@ -110,7 +110,7 @@ describe("TetrisBoard", () => {
           const col = testField[x].colArr;
           for (let y = 0; y < DEFAULT_TEST_BOARD_HEIGHT; y += 1) {
             assert.strictEqual(
-              col[y],
+              col[y].type,
               TetrominoType.Blank,
               `Pixel ${x} on row ${y} is not blank`
             );
@@ -149,7 +149,7 @@ describe("TetrisBoard", () => {
 
       it("Should return the correct number of cleared lines", () => {
         assert.strictEqual(
-          testBoard.clearLines(),
+          testBoard.clearLines({ dmg: 99999, linesIdxArr: [9, 8, 7, 6] }),
           DEFAULT_TEST_NUM_CLEAR_LINES,
           `Number of cleared lines is not ${DEFAULT_TEST_NUM_CLEAR_LINES}`
         );
