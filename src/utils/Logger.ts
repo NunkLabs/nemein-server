@@ -1,4 +1,3 @@
-import { DateTime } from "luxon";
 import { createLogger, format, transports } from "winston";
 
 const logger = createLogger({
@@ -15,7 +14,7 @@ const logger = createLogger({
       handleRejections: true,
     }),
     new transports.File({
-      filename: `logs/${DateTime.now().toISO()}.log`,
+      filename: `logs/${new Date().toISOString()}.log`,
       handleExceptions: true,
       handleRejections: true,
     }),
