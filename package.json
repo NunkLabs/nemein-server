@@ -44,7 +44,7 @@
     "postinstall": "is-ci || husky install",
     "start": "tsc && node dist/index.js",
     "test": " ",
-    "test-classic": "NODE_ENV=test mocha -r ts-node/register test/*.ts",
+    "test-classic": "NODE_ENV=test mocha -r ts-node/register test/classic/*.ts",
     "update": "yarn upgrade-interactive --latest"
   },
   "type": "module"

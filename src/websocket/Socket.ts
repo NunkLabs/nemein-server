@@ -1,6 +1,7 @@
 import { WebSocket } from "ws";
 
-import { Command, Tetris } from "../core/Tetris.js";
+import { ClassicCommand, Classic } from "../core/classic/Classic.js";
+import { NemeinCommand, Nemein } from "../core/nemein/Nemein.js";
 
 const DEFAULT_WS_CLOSURE = 1000;
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 5000;
@@ -29,6 +30,8 @@ export class TetrisSocket {
 
   private active: boolean;
 
+  private instance: Nemein | Classic;
+
   private timeout: NodeJS.Timeout | null;
 
   id: string;
@@ -39,6 +42,8 @@ export class TetrisSocket {
     this.id = id;
     this.socket = socket;
     this.active = false;
+    this.instance =
+      process.env.NODE_ENV === "dev" ? new Nemein() : new Classic();
     this.timeout = null;
     this.timestamp = Date.now();
 
@@ -59,33 +64,38 @@ export class TetrisSocket {
 
     this.active = true;
 
-    let gameInstance = new Tetris();
-    let gameState = gameInstance.updateGameStates();
+    let gameStates =
+      this.instance instanceof Nemein
+        ? this.instance.updateNemeinStates()
+        : this.instance.updateClassicStates();
 
     this.send({
       op: Opcodes.READY,
-      data: gameState,
+      data: gameStates,
     });
 
     /* Sends updated game states after an interval */
     const timeout = () => {
       if (this.active) {
-        gameState = gameInstance.updateGameStates(Command.TickDown);
+        gameStates =
+          this.instance instanceof Nemein
+            ? this.instance.updateNemeinStates(NemeinCommand.TickDown)
+            : this.instance.updateClassicStates(ClassicCommand.Down);
 
         this.send({
           op: Opcodes.DATA,
-          data: gameState,
+          data: gameStates,
         });
 
-        if (gameState.gameOver) {
+        if (gameStates.gameOver) {
           this.active = false;
         }
       }
 
-      this.timeout = setTimeout(timeout, gameState.gameInterval);
+      this.timeout = setTimeout(timeout, gameStates.gameInterval);
     };
 
-    this.timeout = setTimeout(timeout, gameState.gameInterval);
+    this.timeout = setTimeout(timeout, gameStates.gameInterval);
 
     this.socket.on("message", (data) => {
       const message = JSON.parse(data.toString());
@@ -98,32 +108,36 @@ export class TetrisSocket {
         }
 
         case Opcodes.RESTART: {
-          gameInstance = new Tetris();
+          this.instance =
+            this.instance instanceof Nemein ? new Nemein() : new Classic();
 
-          gameState = gameInstance.updateGameStates();
+          gameStates =
+            this.instance instanceof Nemein
+              ? this.instance.updateNemeinStates()
+              : this.instance.updateClassicStates();
 
           this.send({
             op: Opcodes.DATA,
-            data: gameState,
+            data: gameStates,
           });
 
           break;
         }
 
         case Opcodes.INPUT: {
-          if (gameState.gameOver) return;
+          if (gameStates.gameOver) return;
 
           /* Sends the updated game state after registering an input */
           this.send({
             op: Opcodes.DATA,
-            data: gameInstance.inputHandle(message.data),
+            data: this.instance.inputHandle(message.data),
           });
 
           if (message.data !== SPACE || !this.timeout) return;
 
           clearTimeout(this.timeout);
 
-          this.timeout = setTimeout(timeout, gameState.gameInterval);
+          this.timeout = setTimeout(timeout, gameStates.gameInterval);
 
           break;
         }

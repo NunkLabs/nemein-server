@@ -4,7 +4,7 @@ import {
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
   TetrisCol,
-} from "./TetrisBoard.js";
+} from "./ClassicBoard.js";
 
 import {
   X_INDEX,
@@ -15,7 +15,7 @@ import {
   TetrominoManager,
   Tetromino,
   TetrominoRotateDirection,
-} from "./TetrominoManager.js";
+} from "./ClassicManager.js";
 
 import logger from "../../utils/Logger.js";
 
@@ -54,7 +54,7 @@ export const LOCK_DELAY_MS = 500;
 export const VARIABLE_GOAL_MULTIPLIER = 10;
 
 /* Enum types */
-export enum Command {
+export enum ClassicCommand {
   Left,
   Right,
   ClockwiseRotate,
@@ -71,7 +71,7 @@ export enum LineValue {
   Tetris = 4,
 }
 
-export type TetrisStates = {
+export type ClassicStates = {
   corX: number;
   corY: number;
   ghostCorY: number;
@@ -86,7 +86,7 @@ export type TetrisStates = {
   gameInterval: number;
 };
 
-export class Tetris {
+export class Classic {
   private boardWidth: number;
 
   private board: TetrisBoard;
@@ -362,14 +362,16 @@ export class Tetris {
   }
 
   /**
-   * @brief: updateGameStates: Handler for each 'tick' of the game
+   * @brief: updateClassicStates: Handler for each 'tick' of the game
    * or when a command is issued
    * @param: command - The command to be executed. The command is
    * always 'Down' for each tick of the game. If the command is undefined,
    * we simply return the current game states without making any changes
    * @return: Updated game states
    */
-  public updateGameStates(command: Command | null = null): TetrisStates {
+  public updateClassicStates(
+    command: ClassicCommand | null = null
+  ): ClassicStates {
     let activeTetromino = this.tetrominoManager.getActiveTetromino();
     if (command !== null && !this.gameOver) {
       /* Handling init - We only render the newly spawned tetromino */
@@ -415,7 +417,7 @@ export class Tetris {
 
         /* Determine which value to be modified (x - y - rotate ?) */
         switch (command) {
-          case Command.Left: {
+          case ClassicCommand.Left: {
             testCorX = this.corX - 1;
 
             if (
@@ -431,7 +433,7 @@ export class Tetris {
             }
             break;
           }
-          case Command.Right: {
+          case ClassicCommand.Right: {
             testCorX = this.corX + 1;
 
             if (
@@ -447,15 +449,15 @@ export class Tetris {
             }
             break;
           }
-          case Command.ClockwiseRotate: {
+          case ClassicCommand.ClockwiseRotate: {
             this.handleRotation(TetrominoRotateDirection.Clockwise);
             break;
           }
-          case Command.CounterclockwiseRotate: {
+          case ClassicCommand.CounterclockwiseRotate: {
             this.handleRotation(TetrominoRotateDirection.Counterclockwise);
             break;
           }
-          case Command.Down: {
+          case ClassicCommand.Down: {
             testCorY = this.corY + 1;
             yAddValid = this.board.isTetrominoRenderable(
               false,
@@ -477,12 +479,12 @@ export class Tetris {
             }
             break;
           }
-          case Command.HardDrop: {
+          case ClassicCommand.HardDrop: {
             yAddValid = false;
             this.corY = this.ghostCorY;
             break;
           }
-          case Command.HoldTetromino: {
+          case ClassicCommand.HoldTetromino: {
             if (!this.onHold) {
               this.tetrominoManager.swapHeldTetromino();
               this.corX = Math.floor(this.boardWidth / 2);
@@ -546,12 +548,12 @@ export class Tetris {
              * the init handling section of this function - which should return
              * anyway
              */
-            return this.updateGameStates(Command.Down);
+            return this.updateClassicStates(ClassicCommand.Down);
           }
         } else if (
           this.corY === this.ghostCorY &&
           !this.isLockDelayEnabled &&
-          command !== Command.HardDrop
+          command !== ClassicCommand.HardDrop
         ) {
           /* Lock-delay handling once Tetromino is about to be blocked */
           this.gameInterval =
@@ -592,18 +594,18 @@ export class Tetris {
    * @param: event - The keyboard event received
    * @return: Updated game states
    */
-  public inputHandle(key: string): TetrisStates {
-    let retCommand: Command = Command.Down;
+  public inputHandle(key: string): ClassicStates {
+    let retCommand: ClassicCommand = ClassicCommand.Down;
     switch (key) {
       case NUMPAD_4:
       /* Fallthrough */
       case ARROW_LEFT:
-        retCommand = Command.Left;
+        retCommand = ClassicCommand.Left;
         break;
       case NUMPAD_6:
       /* Fallthrough */
       case ARROW_RIGHT:
-        retCommand = Command.Right;
+        retCommand = ClassicCommand.Right;
         break;
       case NUMPAD_1:
       /* Fallthrough */
@@ -614,7 +616,7 @@ export class Tetris {
       case X_KEY:
       /* Fallthrough */
       case ARROW_UP:
-        retCommand = Command.ClockwiseRotate;
+        retCommand = ClassicCommand.ClockwiseRotate;
         break;
       case NUMPAD_3:
       /* Fallthrough */
@@ -623,27 +625,27 @@ export class Tetris {
       case Z_KEY:
       /* Fallthrough */
       case CTRL:
-        retCommand = Command.CounterclockwiseRotate;
+        retCommand = ClassicCommand.CounterclockwiseRotate;
         break;
       case NUMPAD_8:
       /* Fallthrough */
       case SPACE:
-        retCommand = Command.HardDrop;
+        retCommand = ClassicCommand.HardDrop;
         break;
       case NUMPAD_0:
       /* Fallthrough */
       case C_KEY:
       /* Fallthrough */
       case SHIFT:
-        retCommand = Command.HoldTetromino;
+        retCommand = ClassicCommand.HoldTetromino;
         break;
       default:
         logger.error(`[Tetris] Unknown input ${key}`);
         break;
     }
 
-    return this.updateGameStates(retCommand);
+    return this.updateClassicStates(retCommand);
   }
 }
 
-export default Tetris;
+export default Classic;

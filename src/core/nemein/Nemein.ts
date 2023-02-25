@@ -4,7 +4,7 @@ import {
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
   TetrisCol,
-} from "./TetrisBoard.js";
+} from "./NemeinBoard.js";
 
 import {
   X_INDEX,
@@ -15,9 +15,9 @@ import {
   TetrominoManager,
   Tetromino,
   TetrominoRotateDirection,
-} from "./TetrominoManager.js";
+} from "./NemeinManager.js";
 
-import logger from "../utils/Logger.js";
+import logger from "../../utils/Logger.js";
 
 /* Keyboard event consts */
 export const ARROW_DOWN = "ArrowDown";
@@ -56,7 +56,7 @@ export const VARIABLE_GOAL_MULTIPLIER = 10;
 export const DEFAULT_NUM_TICKS_PER_GREY_LINE_SPAWNED = 10;
 
 /* Enum types */
-export enum Command {
+export enum NemeinCommand {
   Left,
   Right,
   ClockwiseRotate,
@@ -74,7 +74,7 @@ export enum LineValue {
   Tetris = 4,
 }
 
-export type TetrisStates = {
+export type NemeinStates = {
   corX: number;
   corY: number;
   ghostCorY: number;
@@ -89,7 +89,7 @@ export type TetrisStates = {
   gameInterval: number;
 };
 
-export class Tetris {
+export class Nemein {
   private boardWidth: number;
 
   private board: TetrisBoard;
@@ -384,14 +384,16 @@ export class Tetris {
   }
 
   /**
-   * @brief: updateGameStates: Handler for each 'tick' of the game
+   * @brief: updateNemeinStates: Handler for each 'tick' of the game
    * or when a command is issued
    * @param: command - The command to be executed. The command is
    * always 'Down' for each tick of the game. If the command is undefined,
    * we simply return the current game states without making any changes
    * @return: Updated game states
    */
-  public updateGameStates(command: Command | null = null): TetrisStates {
+  public updateNemeinStates(
+    command: NemeinCommand | null = null
+  ): NemeinStates {
     let activeTetromino = this.tetrominoManager.getActiveTetromino();
     if (command !== null && !this.gameOver) {
       /* Handling init - We only render the newly spawned tetromino */
@@ -437,7 +439,7 @@ export class Tetris {
 
         /* Determine which value to be modified (x - y - rotate ?) */
         switch (command) {
-          case Command.Left: {
+          case NemeinCommand.Left: {
             testCorX = this.corX - 1;
 
             if (
@@ -453,7 +455,7 @@ export class Tetris {
             }
             break;
           }
-          case Command.Right: {
+          case NemeinCommand.Right: {
             testCorX = this.corX + 1;
 
             if (
@@ -469,15 +471,15 @@ export class Tetris {
             }
             break;
           }
-          case Command.ClockwiseRotate: {
+          case NemeinCommand.ClockwiseRotate: {
             this.handleRotation(TetrominoRotateDirection.Clockwise);
             break;
           }
-          case Command.CounterclockwiseRotate: {
+          case NemeinCommand.CounterclockwiseRotate: {
             this.handleRotation(TetrominoRotateDirection.Counterclockwise);
             break;
           }
-          case Command.TickDown: {
+          case NemeinCommand.TickDown: {
             /**
              * This command is technically Command.Down but with the addition for
              * increasing the number of ticks and spawning challenge lines
@@ -489,7 +491,7 @@ export class Tetris {
             }
             /* Fallthrough */
           }
-          case Command.Down: {
+          case NemeinCommand.Down: {
             testCorY = this.corY + 1;
             yAddValid = this.board.isTetrominoRenderable(
               false,
@@ -511,12 +513,12 @@ export class Tetris {
             }
             break;
           }
-          case Command.HardDrop: {
+          case NemeinCommand.HardDrop: {
             yAddValid = false;
             this.corY = this.ghostCorY;
             break;
           }
-          case Command.HoldTetromino: {
+          case NemeinCommand.HoldTetromino: {
             if (!this.onHold) {
               this.tetrominoManager.swapHeldTetromino();
               this.corX = Math.floor(this.boardWidth / 2);
@@ -578,12 +580,12 @@ export class Tetris {
            * the init handling section of this function - which should return
            * anyway
            */
-          return this.updateGameStates(Command.TickDown);
+          return this.updateNemeinStates(NemeinCommand.TickDown);
         }
         if (
           this.corY === this.ghostCorY &&
           !this.isLockDelayEnabled &&
-          command !== Command.HardDrop
+          command !== NemeinCommand.HardDrop
         ) {
           /* Lock-delay handling once Tetromino is about to be blocked */
           this.gameInterval =
@@ -624,18 +626,18 @@ export class Tetris {
    * @param: event - The keyboard event received
    * @return: Updated game states
    */
-  public inputHandle(key: string): TetrisStates {
-    let retCommand: Command = Command.Down;
+  public inputHandle(key: string): NemeinStates {
+    let retCommand: NemeinCommand = NemeinCommand.Down;
     switch (key) {
       case NUMPAD_4:
       /* Fallthrough */
       case ARROW_LEFT:
-        retCommand = Command.Left;
+        retCommand = NemeinCommand.Left;
         break;
       case NUMPAD_6:
       /* Fallthrough */
       case ARROW_RIGHT:
-        retCommand = Command.Right;
+        retCommand = NemeinCommand.Right;
         break;
       case NUMPAD_1:
       /* Fallthrough */
@@ -646,7 +648,7 @@ export class Tetris {
       case X_KEY:
       /* Fallthrough */
       case ARROW_UP:
-        retCommand = Command.ClockwiseRotate;
+        retCommand = NemeinCommand.ClockwiseRotate;
         break;
       case NUMPAD_3:
       /* Fallthrough */
@@ -655,19 +657,19 @@ export class Tetris {
       case Z_KEY:
       /* Fallthrough */
       case CTRL:
-        retCommand = Command.CounterclockwiseRotate;
+        retCommand = NemeinCommand.CounterclockwiseRotate;
         break;
       case NUMPAD_8:
       /* Fallthrough */
       case SPACE:
-        retCommand = Command.HardDrop;
+        retCommand = NemeinCommand.HardDrop;
         break;
       case NUMPAD_0:
       /* Fallthrough */
       case C_KEY:
       /* Fallthrough */
       case SHIFT:
-        retCommand = Command.HoldTetromino;
+        retCommand = NemeinCommand.HoldTetromino;
         break;
       case ARROW_DOWN:
         break;
@@ -676,8 +678,8 @@ export class Tetris {
         break;
     }
 
-    return this.updateGameStates(retCommand);
+    return this.updateNemeinStates(retCommand);
   }
 }
 
-export default Tetris;
+export default Nemein;
