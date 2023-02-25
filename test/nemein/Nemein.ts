@@ -24,28 +24,28 @@ import {
   Z_KEY,
   DEFAULT_TIME_INTERVAL_MS,
   LOCK_DELAY_MS,
-  Tetris,
-} from "../src/core/Tetris.js";
+  Nemein,
+} from "../../src/core/nemein/Nemein.js";
 
-import { Y_START, TetrisBoard } from "../src/core/TetrisBoard.js";
+import { Y_START, TetrisBoard } from "../../src/core/nemein/NemeinBoard";
 
 import {
   Tetromino,
   TetrominoRotation,
   TetrominoType,
-} from "../src/core/TetrominoManager.js";
+} from "../../src/core/nemein/NemeinManager.js";
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;
 const DEFAULT_TEST_NUM_DOWN_COMMAND_RUNS = 2;
 
-describe("Tetris", () => {
+describe("Nemein", () => {
   describe(`Test initilization`, () => {
-    const testTetris = new Tetris(
+    const testTetris = new Nemein(
       DEFAULT_TEST_BOARD_WIDTH,
       DEFAULT_TEST_BOARD_HEIGHT
     );
-    const testGameStates = testTetris.updateGameStates();
+    const testGameStates = testTetris.updateNemeinStates();
     /**
      * We're ignoring checking the values of corX, corY, ghostCorY, Tetrominos,
      * field, etc. here as they are already covered in the TetrisBoard &
@@ -91,7 +91,7 @@ describe("Tetris", () => {
       step("Should correctly render on down input", () => {
         const testCommands = [ARROW_DOWN, NUMPAD_2];
         testCommands.forEach((command) => {
-          const testTetris = new Tetris(
+          const testTetris = new Nemein(
             DEFAULT_TEST_BOARD_WIDTH,
             DEFAULT_TEST_BOARD_HEIGHT,
             testOverwrittenTetromino
@@ -143,7 +143,7 @@ describe("Tetris", () => {
       step("Should correctly render active Tetromino right 1 unit", () => {
         const testCommands = [ARROW_RIGHT, NUMPAD_6];
         testCommands.forEach((command) => {
-          const testTetris = new Tetris(
+          const testTetris = new Nemein(
             DEFAULT_TEST_BOARD_WIDTH,
             DEFAULT_TEST_BOARD_HEIGHT,
             testOverwrittenTetromino
@@ -180,7 +180,7 @@ describe("Tetris", () => {
       step("Should correctly render active Tetromino left 1 unit", () => {
         const testCommands = [ARROW_LEFT, NUMPAD_4];
         testCommands.forEach((command) => {
-          const testTetris = new Tetris(
+          const testTetris = new Nemein(
             DEFAULT_TEST_BOARD_WIDTH,
             DEFAULT_TEST_BOARD_HEIGHT,
             testOverwrittenTetromino
@@ -219,7 +219,7 @@ describe("Tetris", () => {
         () => {
           const testCommands = [ARROW_UP, NUMPAD_1, NUMPAD_5, NUMPAD_9];
           testCommands.forEach((command) => {
-            const testTetris = new Tetris(
+            const testTetris = new Nemein(
               DEFAULT_TEST_BOARD_WIDTH,
               DEFAULT_TEST_BOARD_HEIGHT,
               testOverwrittenTetromino
@@ -259,7 +259,7 @@ describe("Tetris", () => {
         () => {
           const testCommands = [CTRL, Z_KEY, NUMPAD_3, NUMPAD_7];
           testCommands.forEach((command) => {
-            const testTetris = new Tetris(
+            const testTetris = new Nemein(
               DEFAULT_TEST_BOARD_WIDTH,
               DEFAULT_TEST_BOARD_HEIGHT,
               testOverwrittenTetromino
@@ -297,7 +297,7 @@ describe("Tetris", () => {
       step("Should correctly render active Tetromino hard-dropped", () => {
         const testCommands = [SPACE, NUMPAD_8];
         testCommands.forEach((command) => {
-          const testTetris = new Tetris(
+          const testTetris = new Nemein(
             DEFAULT_TEST_BOARD_WIDTH,
             DEFAULT_TEST_BOARD_HEIGHT,
             testOverwrittenTetromino
@@ -334,7 +334,7 @@ describe("Tetris", () => {
       step("Should correctly hold the active Tetromino", () => {
         const testCommands = [C_KEY, NUMPAD_0, SHIFT];
         testCommands.forEach((command) => {
-          const testTetris = new Tetris(
+          const testTetris = new Nemein(
             DEFAULT_TEST_BOARD_WIDTH,
             DEFAULT_TEST_BOARD_HEIGHT,
             testOverwrittenTetromino
@@ -365,7 +365,7 @@ describe("Tetris", () => {
         type: TetrominoType.T,
         rotation: TetrominoRotation.O,
       };
-      const testTetris = new Tetris(
+      const testTetris = new Nemein(
         DEFAULT_TEST_BOARD_WIDTH,
         DEFAULT_TEST_BOARD_HEIGHT,
         testOverwrittenTetromino,

@@ -5,12 +5,12 @@ import {
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
   TetrisCol,
-} from "../src/core/TetrisBoard.js";
+} from "../../src/core/classic/ClassicBoard.js";
 
 import {
   TetrominoRotation,
   TetrominoType,
-} from "../src/core/TetrominoManager.js";
+} from "../../src/core/classic/ClassicManager.js";
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;
@@ -59,7 +59,7 @@ describe("TetrisBoard", () => {
           const col = testField[x].colArr;
           for (let y = 0; y < DEFAULT_BOARD_HEIGHT; y += 1) {
             assert.strictEqual(
-              col[y].type,
+              col[y],
               TetrominoType.Blank,
               `Pixel ${x} on row ${y} is not blank`
             );
@@ -110,7 +110,7 @@ describe("TetrisBoard", () => {
           const col = testField[x].colArr;
           for (let y = 0; y < DEFAULT_TEST_BOARD_HEIGHT; y += 1) {
             assert.strictEqual(
-              col[y].type,
+              col[y],
               TetrominoType.Blank,
               `Pixel ${x} on row ${y} is not blank`
             );
@@ -149,7 +149,7 @@ describe("TetrisBoard", () => {
 
       it("Should return the correct number of cleared lines", () => {
         assert.strictEqual(
-          testBoard.clearLines({ dmg: 99999, linesIdxArr: [9, 8, 7, 6] }),
+          testBoard.clearLines(),
           DEFAULT_TEST_NUM_CLEAR_LINES,
           `Number of cleared lines is not ${DEFAULT_TEST_NUM_CLEAR_LINES}`
         );
