@@ -99,6 +99,9 @@ export class TetrisBoard {
             cell.hp -= newDmgPool;
             newDmgPool = 0;
           }
+        } else {
+          cell.hp = 0;
+          cell.type = TetrominoType.Blank;
         }
       }
     }
@@ -257,10 +260,7 @@ export class TetrisBoard {
         }
 
         const cellType = this.field[col].colArr[row].type;
-        if (
-          cellType === TetrominoType.Blank ||
-          cellType === TetrominoType.Ghost
-        ) {
+        if (cellType < TetrominoType.Square || cellType > TetrominoType.Grey) {
           isLineComplete = false;
           break;
         } else if (cellType < TetrominoType.Grey) {
@@ -327,7 +327,7 @@ export class TetrisBoard {
     corY: number,
     type: TetrominoType,
     rotation: TetrominoRotation,
-    renderValue: number
+    renderValue: TetrominoType
   ): void {
     const tetrominoCoords = TetrominoManager.getTetrominoCoords(type, rotation);
     for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
