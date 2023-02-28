@@ -14,10 +14,12 @@ export const DEFAULT_BOARD_WIDTH = 10;
 export const DEFAULT_BOARD_HEIGHT = 20;
 export const DEFAULT_DMG_PER_LINE = 100;
 export const DEFAULT_CELL_HP = 10;
+export const DEFAULT_CHALLENGE_CELL_HP = 20;
+export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
 
-export type LinesClearInfo = {
+export type LineClearInfo = {
   dmg: number;
-  linesIdxArr: number[];
+  lineIdx: number;
 };
 
 export type TetrisCell = {
@@ -75,32 +77,40 @@ export class TetrisBoard {
   }
 
   /**
-   * @brief: Deals dmg to all available cells in a line. This will
-   * attempt to clear all cells until dmg pool is empty
+   * @brief Attempt to deal dmg to the current challenge line
+   * @param info - Info containing dmg pool info
+   * @returns true if dmg pool is enough to clear the current challenge line. False otw
+   */
+  private dealDmgToChallengeLine(info: LineClearInfo): boolean {
+    let ret = false;
+
+    const dmgPerCell = Math.floor(info.dmg / this.boardWidth);
+    if (
+      this.dealDmgToLine(this.challengeLineIdx, dmgPerCell) === this.boardWidth
+    ) {
+      ret = true;
+      this.shiftLinesUpByOne(this.challengeLineIdx);
+      this.challengeLineIdx += 1;
+    }
+
+    return ret;
+  }
+
+  /**
+   * @brief: Deals dmg to all available cells in a line
    * @param lineIdx - Index of line in board to clear
-   * @param dmgPool - Damage pool available
+   * @param dmgPerCell - Damage to be dealt per cell
    * @returns number of cells cleared in the line
    */
-  private dealDmgToLine(lineIdx: number, dmgPool: number): number {
+  private dealDmgToLine(lineIdx: number, dmgPerCell: number): number {
     let retNumCellsCleared = 0;
-
-    let newDmgPool = dmgPool;
 
     if (lineIdx >= 0 && lineIdx < this.boardHeight) {
       for (let col = 0; col < this.boardWidth; col += 1) {
         const cell = this.field[col].colArr[lineIdx];
-        if (cell.hp > 0) {
-          if (newDmgPool >= cell.hp) {
-            newDmgPool -= cell.hp;
-            cell.hp = 0;
-            cell.type = TetrominoType.Blank;
-            retNumCellsCleared += 1;
-          } else {
-            cell.hp -= newDmgPool;
-            newDmgPool = 0;
-          }
-        } else {
-          cell.hp = 0;
+        cell.hp -= dmgPerCell;
+        if (cell.hp <= 0) {
+          retNumCellsCleared += 1;
           cell.type = TetrominoType.Blank;
         }
       }
@@ -185,45 +195,37 @@ export class TetrisBoard {
   /**
    * @brief: clearLines: Check for complete lines and clear those from the
    * current field
-   * @param info - Object containing info on dmg pool and line indexes to be cleared
+   * @param infoArr - Array containing
    * @return Number of cleared/complete lines
    */
-  public clearLines(info: LinesClearInfo): number {
+  public clearLines(infoArr: LineClearInfo[]): number {
     /* Check for complete lines and clear if there are any */
     let retNumLinesCompleted = 0;
-    const dmgPool = info.dmg;
-    for (;;) {
-      let lineIdx = info.linesIdxArr.shift();
-      if (!lineIdx || !dmgPool) {
-        break;
-      }
+
+    for (let infoIdx = 0; infoIdx < infoArr.length; infoIdx += 1) {
+      const info = infoArr[infoIdx];
       /**
        * The index of this line to be cleared might need an upward shift
        * due to potential previous lines cleared
        */
-      lineIdx += retNumLinesCompleted;
+      info.lineIdx += retNumLinesCompleted;
 
       /**
-       * Attemp to deal damage and clear lines. The following order will be executed:
-       * 1. We'll first attempt to deal dmg and clear the line that the user formed
+       * Attempt to deal damage and clear lines. The following order will be executed:
+       * 1. We'll first clear the line that the user formed. *This should always clear
+       * successfully as the dmg pool should have already allocated enough damage for this*
        * 2. We'll then attempt to deal dmg at the challenge line
+       *
        * In case the user formed line and the challenge line are the same, we'll simply
-       * just do one
+       * just deal damage to one
        */
-      if (this.dealDmgToLine(lineIdx, dmgPool) === this.boardWidth) {
+      if (this.challengeLineIdx !== info.lineIdx) {
+        const dmgPerCell = Math.floor(DEFAULT_DMG_PER_LINE / this.boardWidth);
+        this.dealDmgToLine(info.lineIdx, dmgPerCell);
         retNumLinesCompleted += 1;
-        this.shiftLinesUpByOne(lineIdx);
-        if (
-          this.challengeLineIdx !== lineIdx &&
-          this.dealDmgToLine(this.challengeLineIdx, dmgPool) === this.boardWidth
-        ) {
-          retNumLinesCompleted += 1;
-          this.shiftLinesUpByOne(this.challengeLineIdx);
-          this.challengeLineIdx += 1;
-        } else if (this.challengeLineIdx === lineIdx) {
-          this.challengeLineIdx += 1;
-        }
+        this.shiftLinesUpByOne(info.lineIdx);
       }
+      retNumLinesCompleted += Number(this.dealDmgToChallengeLine(info));
     }
 
     if (retNumLinesCompleted) {
@@ -241,20 +243,18 @@ export class TetrisBoard {
   /**
    * @brief Calculate the potential damage pool dealt by user via
    * forming lines
-   * @returns Object containing information on dmg pool and lines to be cleared
+   * @returns Array of objects - each containing information on the index
+   * of the line to be cleared and the damage clearing the line provides
    */
-  public calculateDmgPool(): LinesClearInfo {
+  public calculateDmgPool(): LineClearInfo[] {
+    const ret: LineClearInfo[] = [];
+
     /* Check for complete lines */
-    let retNumLinesCompleted = 0;
-    let numUserCells = 0;
-
-    const linesIdxClearedArr: number[] = [];
-
     for (let row = this.boardHeight - 1; row >= 0; row -= 1) {
       let isLineComplete = true;
-      let tmpNumUserCells = 0;
+      let numUserCells = 0;
       for (let col = 0; col < this.boardWidth; col += 1) {
-        if (col === this.boardWidth - 1 && !tmpNumUserCells) {
+        if (col === this.boardWidth - 1 && !numUserCells) {
           isLineComplete = false;
           break;
         }
@@ -264,23 +264,22 @@ export class TetrisBoard {
           isLineComplete = false;
           break;
         } else if (cellType < TetrominoType.Grey) {
-          tmpNumUserCells += 1;
+          numUserCells += 1;
         }
       }
 
       if (isLineComplete) {
-        retNumLinesCompleted += 1;
-        numUserCells += tmpNumUserCells;
-        linesIdxClearedArr.push(row);
+        const isLineValidForCrit =
+          row === this.challengeLineIdx || row === this.challengeLineIdx - 1;
+
+        const lineDmgPool = isLineValidForCrit
+          ? DEFAULT_DMG_PER_LINE * DEFAULT_CRIT_DMG_MULTIPLIER
+          : DEFAULT_DMG_PER_LINE;
+        ret.push({ dmg: lineDmgPool, lineIdx: row });
       }
     }
 
-    return {
-      dmg:
-        retNumLinesCompleted * DEFAULT_DMG_PER_LINE +
-        numUserCells * DEFAULT_CELL_HP,
-      linesIdxArr: linesIdxClearedArr,
-    };
+    return ret;
   }
 
   /**
@@ -571,7 +570,7 @@ export class TetrisBoard {
       }
       const { colArr } = column;
       colArr[this.boardHeight - 1].type = TetrominoType.Grey;
-      colArr[this.boardHeight - 1].hp = DEFAULT_CELL_HP;
+      colArr[this.boardHeight - 1].hp = DEFAULT_CHALLENGE_CELL_HP;
     }
   }
 
