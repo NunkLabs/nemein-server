@@ -16,15 +16,28 @@ export const DEFAULT_DMG_PER_LINE = 100;
 export const DEFAULT_CELL_HP = 10;
 export const DEFAULT_CHALLENGE_CELL_HP = 20;
 export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
+export const DEFAULT_MAX_ARMOUR = 100;
+export const DEFAULT_CHALLENGE_CELL_ARMOUR = 0;
+
+export type DmgComposition = {
+  physical: number;
+  /* TODO: Populate this later on with other types of dmg */
+};
+
+export type DefComposition = {
+  armour: number;
+  /* TODO: Populate this later on with other types of def */
+};
 
 export type LineClearInfo = {
-  dmg: number;
+  dmg: DmgComposition;
   lineIdx: number;
 };
 
 export type TetrisCell = {
   type: TetrominoType;
   hp: number;
+  def: DefComposition;
 };
 
 export type TetrisCol = {
@@ -64,6 +77,9 @@ export class TetrisBoard {
         col.push({
           type: TetrominoType.Blank,
           hp: 0,
+          def: {
+            armour: 0,
+          },
         });
       }
 
@@ -84,13 +100,19 @@ export class TetrisBoard {
   private dealDmgToChallengeLine(info: LineClearInfo): boolean {
     let ret = false;
 
-    const dmgPerCell = Math.floor(info.dmg / this.boardWidth);
-    if (
-      this.dealDmgToLine(this.challengeLineIdx, dmgPerCell) === this.boardWidth
-    ) {
-      ret = true;
-      this.shiftLinesUpByOne(this.challengeLineIdx);
-      this.challengeLineIdx += 1;
+    if (this.challengeLineIdx < this.boardHeight) {
+      const dmgCompPerCell: DmgComposition = {
+        physical: Math.floor(info.dmg.physical / this.boardWidth),
+        /* TODO: This only takes into account the physical dmg atm */
+      };
+      if (
+        this.dealDmgToLine(this.challengeLineIdx, dmgCompPerCell) ===
+        this.boardWidth
+      ) {
+        ret = true;
+        this.shiftLinesUpByOne(this.challengeLineIdx);
+        this.challengeLineIdx += 1;
+      }
     }
 
     return ret;
@@ -99,16 +121,27 @@ export class TetrisBoard {
   /**
    * @brief: Deals dmg to all available cells in a line
    * @param lineIdx - Index of line in board to clear
-   * @param dmgPerCell - Damage to be dealt per cell
+   * @param dmgCompPerCell - Composition of damage types & values to be dealt
+   * per cell
    * @returns number of cells cleared in the line
    */
-  private dealDmgToLine(lineIdx: number, dmgPerCell: number): number {
+  private dealDmgToLine(
+    lineIdx: number,
+    dmgCompPerCell: DmgComposition
+  ): number {
     let retNumCellsCleared = 0;
 
     if (lineIdx >= 0 && lineIdx < this.boardHeight) {
       for (let col = 0; col < this.boardWidth; col += 1) {
         const cell = this.field[col].colArr[lineIdx];
-        cell.hp -= dmgPerCell;
+
+        let dmgDealToCell = 0;
+        dmgDealToCell +=
+          dmgCompPerCell.physical *
+          ((DEFAULT_MAX_ARMOUR - cell.def.armour) / DEFAULT_MAX_ARMOUR);
+        /* TODO: Handle more dmg + def types later */
+
+        cell.hp -= dmgDealToCell;
         if (cell.hp <= 0) {
           retNumCellsCleared += 1;
           cell.type = TetrominoType.Blank;
@@ -134,14 +167,17 @@ export class TetrisBoard {
       for (let col = 0; col < this.boardWidth; col += 1) {
         let typeToSet = TetrominoType.Blank;
         let hpToSet = 0;
+        let defToSet: DefComposition = { armour: 0 };
         if (rowToShift > 0) {
           const upperCell = this.field[col].colArr[rowToShift - 1];
           typeToSet = upperCell.type;
           hpToSet = upperCell.hp;
+          defToSet = upperCell.def;
         }
         const cellToSet = this.field[col].colArr[rowToShift];
         cellToSet.type = typeToSet;
         cellToSet.hp = hpToSet;
+        cellToSet.def = defToSet;
       }
     }
   }
@@ -161,14 +197,17 @@ export class TetrisBoard {
       for (let col = 0; col < this.boardWidth; col += 1) {
         let typeToSet = TetrominoType.Blank;
         let hpToSet = 0;
+        let defToSet: DefComposition = { armour: 0 };
         if (rowToShift < this.boardHeight - 1) {
           const lowerCell = this.field[col].colArr[rowToShift + 1];
           typeToSet = lowerCell.type;
           hpToSet = lowerCell.hp;
+          defToSet = lowerCell.def;
         }
         const cellToSet = this.field[col].colArr[rowToShift];
         cellToSet.type = typeToSet;
         cellToSet.hp = hpToSet;
+        cellToSet.def = defToSet;
       }
     }
   }
@@ -220,8 +259,15 @@ export class TetrisBoard {
        * just deal damage to one
        */
       if (this.challengeLineIdx !== info.lineIdx) {
-        const dmgPerCell = Math.floor(DEFAULT_DMG_PER_LINE / this.boardWidth);
-        this.dealDmgToLine(info.lineIdx, dmgPerCell);
+        this.dealDmgToLine(info.lineIdx, {
+          physical: Math.floor(DEFAULT_DMG_PER_LINE / this.boardWidth),
+          /**
+           * NOTE: Don't care about other types of dmg here because
+           * we'll be guaranteed with the 2 facts:
+           * 1. User formed lines have no armour
+           * 2. Only deal phys dmg to user formed lines
+           */
+        });
         retNumLinesCompleted += 1;
         this.shiftLinesUpByOne(info.lineIdx);
       }
@@ -275,7 +321,10 @@ export class TetrisBoard {
         const lineDmgPool = isLineValidForCrit
           ? DEFAULT_DMG_PER_LINE * DEFAULT_CRIT_DMG_MULTIPLIER
           : DEFAULT_DMG_PER_LINE;
-        ret.push({ dmg: lineDmgPool, lineIdx: row });
+        ret.push({
+          dmg: { physical: lineDmgPool /* TODO: Handle more types of dmg */ },
+          lineIdx: row,
+        });
       }
     }
 
@@ -569,8 +618,14 @@ export class TetrisBoard {
         column.lowestY -= 1;
       }
       const { colArr } = column;
-      colArr[this.boardHeight - 1].type = TetrominoType.Grey;
-      colArr[this.boardHeight - 1].hp = DEFAULT_CHALLENGE_CELL_HP;
+      const challengeCell = {
+        type: TetrominoType.Grey,
+        hp: DEFAULT_CHALLENGE_CELL_HP,
+        def: {
+          armour: DEFAULT_CHALLENGE_CELL_ARMOUR,
+        },
+      };
+      colArr[this.boardHeight - 1] = challengeCell;
     }
   }
 
@@ -599,7 +654,11 @@ export class TetrisBoard {
         let firstPixel = false;
         for (let y = 0; y < boardHeight; y += 1) {
           const val = bitmap[y * boardWidth + x];
-          col.colArr[y] = { type: val, hp: DEFAULT_CELL_HP };
+          col.colArr[y] = {
+            type: val,
+            hp: DEFAULT_CELL_HP,
+            def: { armour: 0 },
+          };
           if (val) {
             if (firstPixel) {
               firstPixel = false;
