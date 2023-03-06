@@ -11,7 +11,7 @@ import {
   TetrominoRotation,
   TetrominoType,
   TetrominoRotateDirection,
-} from "../../src/core/nemein/NemeinManager";
+} from "../../src/core/nemein/TetrominoManager";
 
 describe("TetrominoManager", () => {
   describe("Test initilization", () => {

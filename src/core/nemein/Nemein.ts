@@ -3,8 +3,8 @@ import {
   DEFAULT_BOARD_WIDTH,
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
-  TetrisCol,
-} from "./NemeinBoard.js";
+  NemeinCol,
+} from "./Board.js";
 
 import {
   X_INDEX,
@@ -15,7 +15,7 @@ import {
   TetrominoManager,
   Tetromino,
   TetrominoRotateDirection,
-} from "./NemeinManager.js";
+} from "./TetrominoManager.js";
 
 import logger from "../../utils/Logger.js";
 
@@ -82,7 +82,7 @@ export type NemeinStates = {
   activeTetromino: TetrominoType;
   activeTetrominoRotate: TetrominoRotation;
   spawnedTetrominos: TetrominoType[];
-  field: TetrisCol[];
+  field: NemeinCol[];
   gameOver: boolean;
   score: number;
   level: number;

@@ -4,7 +4,7 @@ import {
   DEFAULT_BOARD_HEIGHT,
   TetrisBoard,
   TetrisCol,
-} from "./ClassicBoard.js";
+} from "./Board.js";
 
 import {
   X_INDEX,
@@ -15,7 +15,7 @@ import {
   TetrominoManager,
   Tetromino,
   TetrominoRotateDirection,
-} from "./ClassicManager.js";
+} from "./TetrominoManager.js";
 
 import logger from "../../utils/Logger.js";
 

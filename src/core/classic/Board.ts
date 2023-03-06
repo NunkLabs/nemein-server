@@ -5,7 +5,7 @@ import {
   TetrominoManager,
   TetrominoRotation,
   TetrominoType,
-} from "./NemeinManager.js";
+} from "./TetrominoManager.js";
 
 /* Misc consts */
 export const Y_START = 0;
@@ -13,49 +13,9 @@ export const MAX_PIXEL = 4;
 export const DEFAULT_BOARD_WIDTH = 10;
 export const DEFAULT_BOARD_HEIGHT = 20;
 
-/* Dmg consts */
-export const DEFAULT_DMG_PER_LINE = 100;
-export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
-
-/* Defense consts */
-export const DEFAULT_CELL_HP = 10;
-export const DEFAULT_CHALLENGE_CELL_HP = 20;
-export const DEFAULT_MAX_PHYS_REDUC = 90;
-export const DEFAULT_CHALLENGE_CELL_PHYS_REDUC = 0;
-export const DEFAULT_MAX_ELE_RES = 75;
-export const DEFAULT_CHALLENGE_CELL_FIRE_RES = 0;
-export const DEFAULT_CHALLENGE_CELL_COLD_RES = 0;
-export const DEFAULT_CHALLENGE_CELL_LIGHTNING_RES = 0;
-
-export type DmgComposition = {
-  physical: number;
-  fire: number;
-  cold: number;
-  lightning: number;
-  /* TODO: Populate this later on with other types of dmg */
-};
-
-export type DefComposition = {
-  physReduc: number;
-  fireRes: number;
-  coldRes: number;
-  lightningRes: number;
-  /* TODO: Populate this later on with other types of def */
-};
-
-export type LineClearInfo = {
-  dmg: DmgComposition;
-  lineIdx: number;
-};
-
-export type TetrisCell = {
-  type: TetrominoType;
-  hp: number;
-  def: DefComposition;
-};
-
+/* Enum types */
 export type TetrisCol = {
-  colArr: TetrisCell[];
+  colArr: number[];
   lowestY: number;
 };
 
@@ -66,8 +26,6 @@ export class TetrisBoard {
 
   private field: TetrisCol[];
 
-  private challengeLineIdx: number;
-
   constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
     boardHeight: number = DEFAULT_BOARD_HEIGHT
@@ -75,7 +33,6 @@ export class TetrisBoard {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
     this.field = [];
-    this.challengeLineIdx = boardHeight;
 
     this.initField();
   }
@@ -85,19 +42,10 @@ export class TetrisBoard {
    */
   private initField(): void {
     for (let x = 0; x < this.boardWidth; x += 1) {
-      const col: TetrisCell[] = [];
+      const col: number[] = [];
 
       for (let y = 0; y < this.boardHeight; y += 1) {
-        col.push({
-          type: TetrominoType.Blank,
-          hp: 0,
-          def: {
-            physReduc: 0,
-            fireRes: 0,
-            coldRes: 0,
-            lightningRes: 0,
-          },
-        });
+        col.push(TetrominoType.Blank);
       }
 
       const initCol: TetrisCol = {
@@ -106,149 +54,6 @@ export class TetrisBoard {
       };
 
       this.field.push(initCol);
-    }
-  }
-
-  /**
-   * @brief Attempt to deal dmg to the current challenge line
-   * @param info - Info containing dmg pool info
-   * @returns true if dmg pool is enough to clear the current challenge line. False otw
-   */
-  private dealDmgToChallengeLine(info: LineClearInfo): boolean {
-    let ret = false;
-
-    if (this.challengeLineIdx < this.boardHeight) {
-      const dmgCompPerCell: DmgComposition = {
-        physical: Math.floor(info.dmg.physical / this.boardWidth),
-        fire: Math.floor(info.dmg.fire / this.boardWidth),
-        cold: Math.floor(info.dmg.cold / this.boardWidth),
-        lightning: Math.floor(info.dmg.lightning / this.boardWidth),
-        /* TODO: This only takes into account the physical dmg atm */
-      };
-      if (
-        this.dealDmgToLine(this.challengeLineIdx, dmgCompPerCell) ===
-        this.boardWidth
-      ) {
-        ret = true;
-        this.shiftLinesUpByOne(this.challengeLineIdx);
-        this.challengeLineIdx += 1;
-      }
-    }
-
-    return ret;
-  }
-
-  /**
-   * @brief: Deals dmg to all available cells in a line
-   * @param lineIdx - Index of line in board to clear
-   * @param dmgCompPerCell - Composition of damage types & values to be dealt
-   * per cell
-   * @returns number of cells cleared in the line
-   */
-  private dealDmgToLine(
-    lineIdx: number,
-    dmgCompPerCell: DmgComposition
-  ): number {
-    let retNumCellsCleared = 0;
-
-    if (lineIdx >= 0 && lineIdx < this.boardHeight) {
-      for (let col = 0; col < this.boardWidth; col += 1) {
-        const cell = this.field[col].colArr[lineIdx];
-
-        let dmgDealToCell = 0;
-        dmgDealToCell +=
-          dmgCompPerCell.physical *
-          ((DEFAULT_MAX_PHYS_REDUC - cell.def.physReduc) /
-            DEFAULT_MAX_PHYS_REDUC);
-        dmgDealToCell +=
-          dmgCompPerCell.fire *
-          ((DEFAULT_MAX_ELE_RES - cell.def.fireRes) / DEFAULT_MAX_ELE_RES);
-        dmgDealToCell +=
-          dmgCompPerCell.cold *
-          ((DEFAULT_MAX_ELE_RES - cell.def.coldRes) / DEFAULT_MAX_ELE_RES);
-        dmgDealToCell +=
-          dmgCompPerCell.lightning *
-          ((DEFAULT_MAX_ELE_RES - cell.def.lightningRes) / DEFAULT_MAX_ELE_RES);
-        /* TODO: Handle more dmg + def types later */
-
-        cell.hp -= dmgDealToCell;
-        if (cell.hp <= 0) {
-          retNumCellsCleared += 1;
-          cell.type = TetrominoType.Blank;
-        }
-      }
-    }
-
-    return retNumCellsCleared;
-  }
-
-  /**
-   * @brief Shift all lines up (down visually) by one
-   *
-   * @note Our board grows top --> bottom. Hence this shift will
-   * visually indicate that we're shifting downwards. Line at index
-   * startIdx will be overwritten and the first line (idx 0) will be
-   * cleared
-   *
-   * @param startIdx - Starting index to shift all lines upwards
-   */
-  private shiftLinesUpByOne(startIdx: number): void {
-    for (let rowToShift = startIdx; rowToShift > 0; rowToShift -= 1) {
-      for (let col = 0; col < this.boardWidth; col += 1) {
-        let typeToSet = TetrominoType.Blank;
-        let hpToSet = 0;
-        let defToSet: DefComposition = {
-          physReduc: 0,
-          fireRes: 0,
-          coldRes: 0,
-          lightningRes: 0,
-        };
-        if (rowToShift > 0) {
-          const upperCell = this.field[col].colArr[rowToShift - 1];
-          typeToSet = upperCell.type;
-          hpToSet = upperCell.hp;
-          defToSet = upperCell.def;
-        }
-        const cellToSet = this.field[col].colArr[rowToShift];
-        cellToSet.type = typeToSet;
-        cellToSet.hp = hpToSet;
-        cellToSet.def = defToSet;
-      }
-    }
-  }
-
-  /**
-   * @brief Shift all lines down (up visually) by one
-   *
-   * @note Our board grows top --> bottom. Hence this shift will
-   * visually indicate that we're shifting upwards. First line (idx 0)
-   * will be overwritten and the line at index endIdx will be
-   * cleared
-   *
-   * @param endIdx - Starting index to shift all lines upwards
-   */
-  private shiftLinesDownByOne(endIdx: number): void {
-    for (let rowToShift = 0; rowToShift < endIdx; rowToShift += 1) {
-      for (let col = 0; col < this.boardWidth; col += 1) {
-        let typeToSet = TetrominoType.Blank;
-        let hpToSet = 0;
-        let defToSet: DefComposition = {
-          physReduc: 0,
-          fireRes: 0,
-          coldRes: 0,
-          lightningRes: 0,
-        };
-        if (rowToShift < this.boardHeight - 1) {
-          const lowerCell = this.field[col].colArr[rowToShift + 1];
-          typeToSet = lowerCell.type;
-          hpToSet = lowerCell.hp;
-          defToSet = lowerCell.def;
-        }
-        const cellToSet = this.field[col].colArr[rowToShift];
-        cellToSet.type = typeToSet;
-        cellToSet.hp = hpToSet;
-        cellToSet.def = defToSet;
-      }
     }
   }
 
@@ -274,109 +79,43 @@ export class TetrisBoard {
   /**
    * @brief: clearLines: Check for complete lines and clear those from the
    * current field
-   * @param infoArr - Array containing
    * @return Number of cleared/complete lines
    */
-  public clearLines(infoArr: LineClearInfo[]): number {
+  public clearLines(): number {
     /* Check for complete lines and clear if there are any */
     let retNumLinesCompleted = 0;
+    for (let row = this.boardHeight - 1; row >= 0; row -= 1) {
+      let isLineComplete = true;
 
-    for (let infoIdx = 0; infoIdx < infoArr.length; infoIdx += 1) {
-      const info = infoArr[infoIdx];
-      /**
-       * The index of this line to be cleared might need an upward shift
-       * due to potential previous lines cleared
-       */
-      info.lineIdx += retNumLinesCompleted;
-
-      /**
-       * Attempt to deal damage and clear lines. The following order will be executed:
-       * 1. We'll first clear the line that the user formed. *This should always clear
-       * successfully as the dmg pool should have already allocated enough damage for this*
-       * 2. We'll then attempt to deal dmg at the challenge line
-       *
-       * In case the user formed line and the challenge line are the same, we'll simply
-       * just deal damage to one
-       */
-      if (this.challengeLineIdx !== info.lineIdx) {
-        this.dealDmgToLine(info.lineIdx, {
-          physical: Math.floor(DEFAULT_DMG_PER_LINE / this.boardWidth),
-          fire: 0,
-          cold: 0,
-          lightning: 0,
-          /**
-           * NOTE: Don't care about other types of dmg here because
-           * we'll be guaranteed with the 2 facts:
-           * 1. User formed lines have no armour
-           * 2. Only deal phys dmg to user formed lines
-           */
-        });
-        retNumLinesCompleted += 1;
-        this.shiftLinesUpByOne(info.lineIdx);
-      }
-      retNumLinesCompleted += Number(this.dealDmgToChallengeLine(info));
-    }
-
-    if (retNumLinesCompleted) {
-      /* Update the lowest Y value for each col */
       for (let col = 0; col < this.boardWidth; col += 1) {
-        if (this.field[col].lowestY !== this.boardHeight - 1) {
-          this.field[col].lowestY += retNumLinesCompleted;
+        if (this.field[col].colArr[row] === 0) {
+          isLineComplete = false;
+          break;
+        }
+      }
+
+      if (isLineComplete) {
+        retNumLinesCompleted += 1;
+
+        for (let detectedRow = row; detectedRow > 0; detectedRow -= 1) {
+          for (let col = 0; col < this.boardWidth; col += 1) {
+            this.field[col].colArr[detectedRow] =
+              this.field[col].colArr[detectedRow - 1];
+          }
+        }
+
+        row += 1;
+
+        /* Update the lowest row value for each col */
+        for (let col = 0; col < this.boardWidth; col += 1) {
+          if (this.field[col].lowestY !== this.boardHeight - 1) {
+            this.field[col].lowestY += 1;
+          }
         }
       }
     }
 
     return retNumLinesCompleted;
-  }
-
-  /**
-   * @brief Calculate the potential damage pool dealt by user via
-   * forming lines
-   * @returns Array of objects - each containing information on the index
-   * of the line to be cleared and the damage clearing the line provides
-   */
-  public calculateDmgPool(): LineClearInfo[] {
-    const ret: LineClearInfo[] = [];
-
-    /* Check for complete lines */
-    for (let row = this.boardHeight - 1; row >= 0; row -= 1) {
-      let isLineComplete = true;
-      let numUserCells = 0;
-      for (let col = 0; col < this.boardWidth; col += 1) {
-        if (col === this.boardWidth - 1 && !numUserCells) {
-          isLineComplete = false;
-          break;
-        }
-
-        const cellType = this.field[col].colArr[row].type;
-        if (cellType < TetrominoType.Square || cellType > TetrominoType.Grey) {
-          isLineComplete = false;
-          break;
-        } else if (cellType < TetrominoType.Grey) {
-          numUserCells += 1;
-        }
-      }
-
-      if (isLineComplete) {
-        const isLineValidForCrit =
-          row === this.challengeLineIdx || row === this.challengeLineIdx - 1;
-
-        const lineDmgPool = isLineValidForCrit
-          ? DEFAULT_DMG_PER_LINE * DEFAULT_CRIT_DMG_MULTIPLIER
-          : DEFAULT_DMG_PER_LINE;
-        ret.push({
-          dmg: {
-            physical: lineDmgPool,
-            fire: 0,
-            cold: 0,
-            lightning: 0 /* TODO: Handle more types of dmg */,
-          },
-          lineIdx: row,
-        });
-      }
-    }
-
-    return ret;
   }
 
   /**
@@ -423,7 +162,7 @@ export class TetrisBoard {
     corY: number,
     type: TetrominoType,
     rotation: TetrominoRotation,
-    renderValue: TetrominoType
+    renderValue: number
   ): void {
     const tetrominoCoords = TetrominoManager.getTetrominoCoords(type, rotation);
     for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
@@ -432,12 +171,7 @@ export class TetrisBoard {
       const yToRender = corY + coord[Y_INDEX];
 
       if (yToRender >= 0) {
-        const cell = this.field[xToRender].colArr[yToRender];
-        cell.type = renderValue;
-        cell.hp =
-          renderValue > TetrominoType.Blank && renderValue < TetrominoType.Grey
-            ? DEFAULT_CELL_HP
-            : 0;
+        this.field[xToRender].colArr[yToRender] = renderValue;
       }
     }
   }
@@ -481,9 +215,7 @@ export class TetrisBoard {
          * over
          */
         if (newlySpawned) {
-          if (
-            this.field[xToCheck].colArr[yToCheck].type !== TetrominoType.Blank
-          ) {
+          if (this.field[xToCheck].colArr[yToCheck] !== 0) {
             ret = false;
             break;
           }
@@ -492,9 +224,7 @@ export class TetrisBoard {
 
           if (xValid && yValid) {
             /* Check for any overlap */
-            const pixelOverlapped =
-              this.field[xToCheck].colArr[yToCheck].type !==
-              TetrominoType.Blank;
+            const pixelOverlapped = this.field[xToCheck].colArr[yToCheck] !== 0;
 
             if (pixelOverlapped) {
               ret = false;
@@ -650,37 +380,6 @@ export class TetrisBoard {
   }
 
   /**
-   * @brief Spawn a new challenge line (periodically called by Tetris core)
-   * and update the challenge line's index
-   */
-  public spawnChallengeLine(): void {
-    if (this.challengeLineIdx > 0) {
-      this.challengeLineIdx -= 1;
-    }
-
-    /* Move all cells of each column 1 unit downwards and update lowest Y */
-    this.shiftLinesDownByOne(this.boardHeight - 1);
-    for (let col = 0; col < this.boardWidth; col += 1) {
-      const column = this.field[col];
-      if (column.lowestY !== 0) {
-        column.lowestY -= 1;
-      }
-      const { colArr } = column;
-      const challengeCell = {
-        type: TetrominoType.Grey,
-        hp: DEFAULT_CHALLENGE_CELL_HP,
-        def: {
-          physReduc: DEFAULT_CHALLENGE_CELL_PHYS_REDUC,
-          fireRes: DEFAULT_CHALLENGE_CELL_FIRE_RES,
-          coldRes: DEFAULT_CHALLENGE_CELL_COLD_RES,
-          lightningRes: DEFAULT_CHALLENGE_CELL_LIGHTNING_RES,
-        },
-      };
-      colArr[this.boardHeight - 1] = challengeCell;
-    }
-  }
-
-  /**
    * @brief: bitmapToTetrisCols: Convert a 1D array bitmap into an array of
    * TetrisCols
    * @param bitmap: Bitmap to be converted
@@ -705,16 +404,7 @@ export class TetrisBoard {
         let firstPixel = false;
         for (let y = 0; y < boardHeight; y += 1) {
           const val = bitmap[y * boardWidth + x];
-          col.colArr[y] = {
-            type: val,
-            hp: DEFAULT_CELL_HP,
-            def: {
-              physReduc: 0,
-              fireRes: 0,
-              coldRes: 0,
-              lightningRes: 0,
-            },
-          };
+          col.colArr[y] = val;
           if (val) {
             if (firstPixel) {
               firstPixel = false;
@@ -744,7 +434,7 @@ export class TetrisBoard {
       for (let x = 0; x < boardWidth; x += 1) {
         const col = field[x].colArr;
         for (let y = 0; y < boardHeight; y += 1) {
-          ret[y * boardWidth + x] = col[y].type;
+          ret[y * boardWidth + x] = col[y];
         }
       }
     }
