@@ -25,15 +25,15 @@ import {
   DEFAULT_TIME_INTERVAL_MS,
   LOCK_DELAY_MS,
   Classic,
-} from "../../src/core/classic/Classic.js";
+} from "../../src/core/classic/Classic";
 
-import { Y_START, TetrisBoard } from "../../src/core/classic/ClassicBoard.js";
+import { Y_START, TetrisBoard } from "../../src/core/classic/Board";
 
 import {
   Tetromino,
   TetrominoRotation,
   TetrominoType,
-} from "../../src/core/classic/ClassicManager.js";
+} from "../../src/core/classic/TetrominoManager";
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;

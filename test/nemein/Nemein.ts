@@ -25,15 +25,15 @@ import {
   DEFAULT_TIME_INTERVAL_MS,
   LOCK_DELAY_MS,
   Nemein,
-} from "../../src/core/nemein/Nemein.js";
+} from "../../src/core/nemein/Nemein";
 
-import { Y_START, TetrisBoard } from "../../src/core/nemein/NemeinBoard";
+import { Y_START, TetrisBoard } from "../../src/core/nemein/Board";
 
 import {
   Tetromino,
   TetrominoRotation,
   TetrominoType,
-} from "../../src/core/nemein/NemeinManager.js";
+} from "../../src/core/nemein/TetrominoManager";
 
 const DEFAULT_TEST_BOARD_WIDTH = 6;
 const DEFAULT_TEST_BOARD_HEIGHT = 10;
