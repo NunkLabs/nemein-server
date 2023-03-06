@@ -2,7 +2,7 @@ import {
   Y_START,
   DEFAULT_BOARD_WIDTH,
   DEFAULT_BOARD_HEIGHT,
-  TetrisBoard,
+  NemeinBoard,
   NemeinCol,
 } from "./Board.js";
 
@@ -92,7 +92,7 @@ export type NemeinStates = {
 export class Nemein {
   private boardWidth: number;
 
-  private board: TetrisBoard;
+  private board: NemeinBoard;
 
   private onHold: boolean;
 
@@ -138,7 +138,7 @@ export class Nemein {
     dbgOverwriteTimer: boolean = false
   ) {
     this.boardWidth = boardWidth;
-    this.board = new TetrisBoard(boardWidth, boardHeight);
+    this.board = new NemeinBoard(boardWidth, boardHeight);
     this.onHold = false;
     this.corX = Math.floor((boardWidth - 1) / 2);
     this.corY = Y_START;
@@ -314,11 +314,8 @@ export class Nemein {
      *      Number of ticks per spawn (x) will decrease (scaled by game level)
      */
 
-    /* We first calculate dmg (if any) dealt by the user by forming lines */
-    const info = this.board.calculateDmgPool();
-
-    /* Then we attempt to clear these lines given the damage pool we calcuated */
-    const numLinesCompleted = this.board.clearLines(info);
+    /* Attempt to clear complete lines (if any) and update board */
+    const numLinesCompleted = this.board.clearLines();
 
     this.linesCleared += numLinesCompleted;
     let currTetris = false;
@@ -534,7 +531,7 @@ export class Nemein {
              * Here for supressing errors. We should never reach here as the input
              * should've been already sanitized by this point
              */
-            logger.error(`[Tetris] Unknown command ${command}`);
+            logger.error(`[Nemein] Unknown command ${command}`);
             break;
           }
         }
@@ -598,7 +595,7 @@ export class Nemein {
     }
 
     logger.debug(
-      `[Tetris] This tick's interval: ${this.gameInterval}ms (Level: ${this.level})`
+      `[Nemein] This tick's interval: ${this.gameInterval}ms (Level: ${this.level})`
     );
 
     return {
