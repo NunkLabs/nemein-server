@@ -12,20 +12,34 @@ export const Y_START = 0;
 export const MAX_PIXEL = 4;
 export const DEFAULT_BOARD_WIDTH = 10;
 export const DEFAULT_BOARD_HEIGHT = 20;
+
+/* Dmg consts */
 export const DEFAULT_DMG_PER_LINE = 100;
+export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
+
+/* Defense consts */
 export const DEFAULT_CELL_HP = 10;
 export const DEFAULT_CHALLENGE_CELL_HP = 20;
-export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
-export const DEFAULT_MAX_ARMOUR = 100;
-export const DEFAULT_CHALLENGE_CELL_ARMOUR = 0;
+export const DEFAULT_MAX_PHYS_REDUC = 90;
+export const DEFAULT_CHALLENGE_CELL_PHYS_REDUC = 0;
+export const DEFAULT_MAX_ELE_RES = 75;
+export const DEFAULT_CHALLENGE_CELL_FIRE_RES = 0;
+export const DEFAULT_CHALLENGE_CELL_COLD_RES = 0;
+export const DEFAULT_CHALLENGE_CELL_LIGHTNING_RES = 0;
 
 export type DmgComposition = {
   physical: number;
+  fire: number;
+  cold: number;
+  lightning: number;
   /* TODO: Populate this later on with other types of dmg */
 };
 
 export type DefComposition = {
-  armour: number;
+  physReduc: number;
+  fireRes: number;
+  coldRes: number;
+  lightningRes: number;
   /* TODO: Populate this later on with other types of def */
 };
 
@@ -78,7 +92,10 @@ export class TetrisBoard {
           type: TetrominoType.Blank,
           hp: 0,
           def: {
-            armour: 0,
+            physReduc: 0,
+            fireRes: 0,
+            coldRes: 0,
+            lightningRes: 0,
           },
         });
       }
@@ -103,6 +120,9 @@ export class TetrisBoard {
     if (this.challengeLineIdx < this.boardHeight) {
       const dmgCompPerCell: DmgComposition = {
         physical: Math.floor(info.dmg.physical / this.boardWidth),
+        fire: Math.floor(info.dmg.fire / this.boardWidth),
+        cold: Math.floor(info.dmg.cold / this.boardWidth),
+        lightning: Math.floor(info.dmg.lightning / this.boardWidth),
         /* TODO: This only takes into account the physical dmg atm */
       };
       if (
@@ -138,7 +158,17 @@ export class TetrisBoard {
         let dmgDealToCell = 0;
         dmgDealToCell +=
           dmgCompPerCell.physical *
-          ((DEFAULT_MAX_ARMOUR - cell.def.armour) / DEFAULT_MAX_ARMOUR);
+          ((DEFAULT_MAX_PHYS_REDUC - cell.def.physReduc) /
+            DEFAULT_MAX_PHYS_REDUC);
+        dmgDealToCell +=
+          dmgCompPerCell.fire *
+          ((DEFAULT_MAX_ELE_RES - cell.def.fireRes) / DEFAULT_MAX_ELE_RES);
+        dmgDealToCell +=
+          dmgCompPerCell.cold *
+          ((DEFAULT_MAX_ELE_RES - cell.def.coldRes) / DEFAULT_MAX_ELE_RES);
+        dmgDealToCell +=
+          dmgCompPerCell.lightning *
+          ((DEFAULT_MAX_ELE_RES - cell.def.lightningRes) / DEFAULT_MAX_ELE_RES);
         /* TODO: Handle more dmg + def types later */
 
         cell.hp -= dmgDealToCell;
@@ -167,7 +197,12 @@ export class TetrisBoard {
       for (let col = 0; col < this.boardWidth; col += 1) {
         let typeToSet = TetrominoType.Blank;
         let hpToSet = 0;
-        let defToSet: DefComposition = { armour: 0 };
+        let defToSet: DefComposition = {
+          physReduc: 0,
+          fireRes: 0,
+          coldRes: 0,
+          lightningRes: 0,
+        };
         if (rowToShift > 0) {
           const upperCell = this.field[col].colArr[rowToShift - 1];
           typeToSet = upperCell.type;
@@ -197,7 +232,12 @@ export class TetrisBoard {
       for (let col = 0; col < this.boardWidth; col += 1) {
         let typeToSet = TetrominoType.Blank;
         let hpToSet = 0;
-        let defToSet: DefComposition = { armour: 0 };
+        let defToSet: DefComposition = {
+          physReduc: 0,
+          fireRes: 0,
+          coldRes: 0,
+          lightningRes: 0,
+        };
         if (rowToShift < this.boardHeight - 1) {
           const lowerCell = this.field[col].colArr[rowToShift + 1];
           typeToSet = lowerCell.type;
@@ -261,6 +301,9 @@ export class TetrisBoard {
       if (this.challengeLineIdx !== info.lineIdx) {
         this.dealDmgToLine(info.lineIdx, {
           physical: Math.floor(DEFAULT_DMG_PER_LINE / this.boardWidth),
+          fire: 0,
+          cold: 0,
+          lightning: 0,
           /**
            * NOTE: Don't care about other types of dmg here because
            * we'll be guaranteed with the 2 facts:
@@ -322,7 +365,12 @@ export class TetrisBoard {
           ? DEFAULT_DMG_PER_LINE * DEFAULT_CRIT_DMG_MULTIPLIER
           : DEFAULT_DMG_PER_LINE;
         ret.push({
-          dmg: { physical: lineDmgPool /* TODO: Handle more types of dmg */ },
+          dmg: {
+            physical: lineDmgPool,
+            fire: 0,
+            cold: 0,
+            lightning: 0 /* TODO: Handle more types of dmg */,
+          },
           lineIdx: row,
         });
       }
@@ -622,7 +670,10 @@ export class TetrisBoard {
         type: TetrominoType.Grey,
         hp: DEFAULT_CHALLENGE_CELL_HP,
         def: {
-          armour: DEFAULT_CHALLENGE_CELL_ARMOUR,
+          physReduc: DEFAULT_CHALLENGE_CELL_PHYS_REDUC,
+          fireRes: DEFAULT_CHALLENGE_CELL_FIRE_RES,
+          coldRes: DEFAULT_CHALLENGE_CELL_COLD_RES,
+          lightningRes: DEFAULT_CHALLENGE_CELL_LIGHTNING_RES,
         },
       };
       colArr[this.boardHeight - 1] = challengeCell;
@@ -657,7 +708,12 @@ export class TetrisBoard {
           col.colArr[y] = {
             type: val,
             hp: DEFAULT_CELL_HP,
-            def: { armour: 0 },
+            def: {
+              physReduc: 0,
+              fireRes: 0,
+              coldRes: 0,
+              lightningRes: 0,
+            },
           };
           if (val) {
             if (firstPixel) {
