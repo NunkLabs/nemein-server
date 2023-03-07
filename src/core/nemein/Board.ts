@@ -44,7 +44,9 @@ export class NemeinBoard {
 
   private boardHeight: number;
 
-  private field: NemeinCol[];
+  private gameField: NemeinCol[];
+
+  private statusField: TetrominoType[][];
 
   private challengeLine: ChallengeLine;
 
@@ -56,29 +58,31 @@ export class NemeinBoard {
   ) {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
-    this.field = [];
+    this.gameField = [];
+    this.statusField = [];
     this.challengeLine = {
       idx: boardHeight,
     };
     this.dmgManager = new DmgManager(
-      this.field,
+      this.gameField,
       boardWidth,
       boardHeight,
       this.challengeLine
     );
 
-    this.initField();
+    this.initFields();
   }
 
   /**
-   * @brief: initField: Initialize the play field with all blank pixels
+   * @brief: initField: Initialize the game & status fields with all blank pixels
    */
-  private initField(): void {
+  private initFields(): void {
     for (let x = 0; x < this.boardWidth; x += 1) {
-      const col: NemeinCell[] = [];
+      const gameCol: NemeinCell[] = [];
+      const statusCol: TetrominoType[] = [];
 
       for (let y = 0; y < this.boardHeight; y += 1) {
-        col.push({
+        gameCol.push({
           type: TetrominoType.Blank,
           hp: 0,
           def: {
@@ -88,14 +92,17 @@ export class NemeinBoard {
             lightningRes: 0,
           },
         });
+
+        statusCol.push(TetrominoType.Blank);
       }
 
       const initCol: NemeinCol = {
-        colArr: col,
+        colArr: gameCol,
         lowestY: this.boardHeight - 1,
       };
 
-      this.field.push(initCol);
+      this.gameField.push(initCol);
+      this.statusField.push(statusCol);
     }
   }
 
@@ -121,12 +128,12 @@ export class NemeinBoard {
           lightningRes: 0,
         };
         if (rowToShift > 0) {
-          const upperCell = this.field[col].colArr[rowToShift - 1];
+          const upperCell = this.gameField[col].colArr[rowToShift - 1];
           typeToSet = upperCell.type;
           hpToSet = upperCell.hp;
           defToSet = upperCell.def;
         }
-        const cellToSet = this.field[col].colArr[rowToShift];
+        const cellToSet = this.gameField[col].colArr[rowToShift];
         cellToSet.type = typeToSet;
         cellToSet.hp = hpToSet;
         cellToSet.def = defToSet;
@@ -156,12 +163,12 @@ export class NemeinBoard {
           lightningRes: 0,
         };
         if (rowToShift < this.boardHeight - 1) {
-          const lowerCell = this.field[col].colArr[rowToShift + 1];
+          const lowerCell = this.gameField[col].colArr[rowToShift + 1];
           typeToSet = lowerCell.type;
           hpToSet = lowerCell.hp;
           defToSet = lowerCell.def;
         }
-        const cellToSet = this.field[col].colArr[rowToShift];
+        const cellToSet = this.gameField[col].colArr[rowToShift];
         cellToSet.type = typeToSet;
         cellToSet.hp = hpToSet;
         cellToSet.def = defToSet;
@@ -170,21 +177,52 @@ export class NemeinBoard {
   }
 
   /**
-   * @brief: getField: Get the current play field of the game board
-   * @return Current play field of the game board
+   * @brief: setStatusFieldLine - Fill a line of the status field to a value
+   * @param lineIdx - Line in status field to be filled
+   * @param value - Value to be filled
    */
-  public getField(): NemeinCol[] {
-    return JSON.parse(JSON.stringify(this.field));
+  private setStatusFieldLine(lineIdx: number, value: TetrominoType): void {
+    const statusCol: TetrominoType[] = [];
+    for (let col = 0; col < this.boardWidth; col += 1) {
+      statusCol.push(value);
+    }
+    this.statusField[lineIdx] = statusCol;
   }
 
   /**
-   * @brief: setField: Set the current play field of the game board
+   * @brief: getGameField: Get the current game field
+   * @return Current game field of the board (i.e. most up-to-date
+   * field with all changes)
+   */
+  public getGameField(): NemeinCol[] {
+    return JSON.parse(JSON.stringify(this.gameField));
+  }
+
+  /**
+   * @brief: getStatusField: Get the current status field
+   * @param clearStatus - Indicating whether or not we want to clear the
+   * status field. Note that this is true by default
+   * @return Current status field of the board (i.e. field with lines
+   * highlight to support Client rendering)
+   */
+  public getStatusField(clearStatus: boolean = true): TetrominoType[][] {
+    const ret = JSON.parse(JSON.stringify(this.statusField));
+    if (clearStatus) {
+      for (let row = 0; row < this.boardHeight; row += 1) {
+        this.setStatusFieldLine(row, TetrominoType.Blank);
+      }
+    }
+    return ret;
+  }
+
+  /**
+   * @brief: setGameField: Set the current game field
    * @param field: Field to be set
    * @note: Only works when NODE_ENV === "test" (i.e. in a test env)
    */
-  public setField(field: NemeinCol[]): void {
+  public setGameField(field: NemeinCol[]): void {
     if (process.env.NODE_ENV === "test") {
-      this.field = field;
+      this.gameField = field;
     }
   }
 
@@ -202,6 +240,13 @@ export class NemeinBoard {
 
     for (let infoIdx = 0; infoIdx < infoArr.length; infoIdx += 1) {
       const info = infoArr[infoIdx];
+
+      /**
+       * Record line cleared in status field. Note that we want the
+       * raw (i.e. unshifted line indexes)
+       */
+      this.setStatusFieldLine(info.lineIdx, TetrominoType.Cleared);
+
       /**
        * The index of this line to be cleared might need an upward shift
        * due to potential previous lines cleared
@@ -235,6 +280,11 @@ export class NemeinBoard {
       }
 
       if (this.dmgManager.dealDmgToChallengeLine(info)) {
+        /**
+         * Record challenge line cleared in status field. Note that we want
+         * the raw (i.e. unshifted line indexes)
+         */
+        this.setStatusFieldLine(this.challengeLine.idx, TetrominoType.Cleared);
         retNumLinesCompleted += 1;
         this.shiftLinesUpByOne(this.challengeLine.idx);
         this.challengeLine.idx += 1;
@@ -244,8 +294,8 @@ export class NemeinBoard {
     if (retNumLinesCompleted) {
       /* Update the lowest Y value for each col */
       for (let col = 0; col < this.boardWidth; col += 1) {
-        if (this.field[col].lowestY !== this.boardHeight - 1) {
-          this.field[col].lowestY += retNumLinesCompleted;
+        if (this.gameField[col].lowestY !== this.boardHeight - 1) {
+          this.gameField[col].lowestY += retNumLinesCompleted;
         }
       }
     }
@@ -275,10 +325,10 @@ export class NemeinBoard {
       const yToRender = corY + coord[Y_INDEX];
 
       if (yToRender >= 0) {
-        const xCol = this.field[xToRender];
+        const xCol = this.gameField[xToRender];
 
         if (xCol.lowestY > yToRender) {
-          this.field[xToRender].lowestY = yToRender;
+          this.gameField[xToRender].lowestY = yToRender;
         }
       }
     }
@@ -306,7 +356,7 @@ export class NemeinBoard {
       const yToRender = corY + coord[Y_INDEX];
 
       if (yToRender >= 0) {
-        const cell = this.field[xToRender].colArr[yToRender];
+        const cell = this.gameField[xToRender].colArr[yToRender];
         cell.type = renderValue;
         cell.hp =
           renderValue > TetrominoType.Blank && renderValue < TetrominoType.Grey
@@ -356,7 +406,8 @@ export class NemeinBoard {
          */
         if (newlySpawned) {
           if (
-            this.field[xToCheck].colArr[yToCheck].type !== TetrominoType.Blank
+            this.gameField[xToCheck].colArr[yToCheck].type !==
+            TetrominoType.Blank
           ) {
             ret = false;
             break;
@@ -367,7 +418,7 @@ export class NemeinBoard {
           if (xValid && yValid) {
             /* Check for any overlap */
             const pixelOverlapped =
-              this.field[xToCheck].colArr[yToCheck].type !==
+              this.gameField[xToCheck].colArr[yToCheck].type !==
               TetrominoType.Blank;
 
             if (pixelOverlapped) {
@@ -423,7 +474,7 @@ export class NemeinBoard {
           const yValid = yToCheck < this.boardHeight;
 
           if (xValid && yValid) {
-            const yToCmp = this.field[xToCheck].lowestY;
+            const yToCmp = this.gameField[xToCheck].lowestY;
 
             /* If the current tetromino is already higher than the lowest Y among
             the X range, we have to handle it differently */
@@ -535,7 +586,7 @@ export class NemeinBoard {
     /* Move all cells of each column 1 unit downwards and update lowest Y */
     this.shiftLinesDownByOne(this.boardHeight - 1);
     for (let col = 0; col < this.boardWidth; col += 1) {
-      const column = this.field[col];
+      const column = this.gameField[col];
       if (column.lowestY !== 0) {
         column.lowestY -= 1;
       }

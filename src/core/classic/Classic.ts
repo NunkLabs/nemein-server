@@ -79,7 +79,7 @@ export type ClassicStates = {
   activeTetromino: TetrominoType;
   activeTetrominoRotate: TetrominoRotation;
   spawnedTetrominos: TetrominoType[];
-  field: TetrisCol[];
+  gameField: TetrisCol[];
   gameOver: boolean;
   score: number;
   level: number;
@@ -576,7 +576,7 @@ export class Classic {
       heldTetromino: this.tetrominoManager.getHeldTetromino().type,
       activeTetromino: activeTetromino.type,
       activeTetrominoRotate: activeTetromino.rotation,
-      field: this.board.getField(),
+      gameField: this.board.getField(),
       spawnedTetrominos: <TetrominoType[]>(
         this.tetrominoManager.getSpawnedTetrominos(true)
       ),
