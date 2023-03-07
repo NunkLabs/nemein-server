@@ -6,7 +6,6 @@ import {
   ClassicStates,
 } from "../core/classic/Classic.js";
 import { NemeinCommand, Nemein, NemeinStates } from "../core/nemein/Nemein.js";
-import logger from "../utils/Logger.js";
 
 const DEFAULT_WS_CLOSURE = 1000;
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 5000;
@@ -30,7 +29,7 @@ type SocketData = {
   heartbeat?: number;
 };
 
-export class TetrisSocket {
+export class Socket {
   private socket: WebSocket;
 
   private active: boolean;
@@ -60,8 +59,6 @@ export class TetrisSocket {
    * intervals and socket events.
    */
   init() {
-    this.socket.on("error", logger.error);
-
     /* Specifies client's heartbeat on open */
     this.send({
       op: Opcodes.OPEN,
@@ -208,4 +205,4 @@ export class TetrisSocket {
   }
 }
 
-export default TetrisSocket;
+export default Socket;

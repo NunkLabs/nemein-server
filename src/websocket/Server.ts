@@ -1,13 +1,13 @@
 import { WebSocketServer } from "ws";
 
-import { TetrisSocket } from "./Socket.js";
+import { Socket } from "./Socket.js";
 import logger from "../utils/Logger.js";
 
 const LAST_SEEN_DURATION = 120000;
 const SWEEP_INTERVAL = 60000;
 
-export class TetrisSocketServer extends WebSocketServer {
-  sockets: Map<string, TetrisSocket>;
+export class SocketServer extends WebSocketServer {
+  sockets: Map<string, Socket>;
 
   constructor(options = {}) {
     super(options);
@@ -37,4 +37,4 @@ export class TetrisSocketServer extends WebSocketServer {
   }
 }
 
-export default TetrisSocketServer;
+export default SocketServer;
