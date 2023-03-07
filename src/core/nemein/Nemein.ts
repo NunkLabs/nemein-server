@@ -82,7 +82,8 @@ export type NemeinStates = {
   activeTetromino: TetrominoType;
   activeTetrominoRotate: TetrominoRotation;
   spawnedTetrominos: TetrominoType[];
-  field: NemeinCol[];
+  gameField: NemeinCol[];
+  statusField: TetrominoType[][];
   gameOver: boolean;
   score: number;
   level: number;
@@ -606,7 +607,8 @@ export class Nemein {
       heldTetromino: this.tetrominoManager.getHeldTetromino().type,
       activeTetromino: activeTetromino.type,
       activeTetrominoRotate: activeTetromino.rotation,
-      field: this.board.getField(),
+      gameField: this.board.getGameField(),
+      statusField: this.board.getStatusField(),
       spawnedTetrominos: <TetrominoType[]>(
         this.tetrominoManager.getSpawnedTetrominos(true)
       ),
