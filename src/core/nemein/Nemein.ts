@@ -485,6 +485,7 @@ export class Nemein {
             this.numTicks = (this.numTicks + 1) % this.ticksPerGreyLineSpawned;
             if (this.numTicks === 0) {
               this.board.spawnChallengeLine();
+              this.corY -= 1;
             }
             /* Fallthrough */
           }
