@@ -85,8 +85,6 @@ export type NemeinStates = {
   gameField: NemeinCol[];
   statusField: TetrominoType[][];
   gameOver: boolean;
-  score: number;
-  level: number;
   gameInterval: number;
 };
 
@@ -110,26 +108,15 @@ export class Nemein {
 
   private gameOver: boolean;
 
-  private score: number;
-
-  /* Available for integration into TetrisStates and render on client */
-  private linesCleared: number;
-
-  private level: number;
-
   private gameInterval: number;
 
   private isTspin: boolean;
-
-  private wasPreviouslyTetris: boolean;
 
   private isLockDelayEnabled: boolean;
 
   private prevGameInterval: number;
 
   private numTicks: number;
-
-  private ticksPerGreyLineSpawned: number;
 
   constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
@@ -147,19 +134,14 @@ export class Nemein {
     this.tetrominoManager = new TetrominoManager(dbgOverwrittenTetromino);
     this.initRender = true;
     this.gameOver = false;
-    this.score = 0;
-    this.linesCleared = 0;
-    this.level = 1;
     this.gameInterval =
       process.env.NODE_ENV === "test" && dbgOverwriteTimer
         ? 0
         : DEFAULT_TIME_INTERVAL_MS;
     this.isTspin = false;
-    this.wasPreviouslyTetris = false;
     this.isLockDelayEnabled = false;
     this.prevGameInterval = DEFAULT_TIME_INTERVAL_MS;
     this.numTicks = 0;
-    this.ticksPerGreyLineSpawned = DEFAULT_NUM_TICKS_PER_GREY_LINE_SPAWNED;
 
     this.initNewGame();
   }
@@ -300,68 +282,10 @@ export class Nemein {
     );
     this.onHold = false;
 
-    /**
-     * Update score, tetrominos count, level and difficulty
-     *
-     * Updating scheme as follow:
-     *  - Score: Increments based on Tetris World's rules (see
-     *      https://tetris.fandom.com/wiki/Tetris_Worlds)
-     *  - Reset previously Tetris & T-spin flag if was previously enabled
-     *  - Level: Increments by 1 after everytime current score reaches/exceeds
-     *      the value of current level * VARIABLE_GOAL_MULTIPLIER (default is 10).
-     *      By default this value is 5 but it progresses too fast
-     *  -Difficulty:
-     *      Spawn 1 new challenge line after every x ticks
-     *      Number of ticks per spawn (x) will decrease (scaled by game level)
-     */
-
     /* Attempt to clear complete lines (if any) and update board */
-    const numLinesCompleted = this.board.clearLines();
+    this.board.clearLines();
 
-    this.linesCleared += numLinesCompleted;
-    let currTetris = false;
-    let scoreToAdd = 0;
-    switch (numLinesCompleted) {
-      case LineValue.None:
-        scoreToAdd = this.isTspin ? 1 : 0;
-        break;
-      case LineValue.Single:
-        scoreToAdd = this.isTspin ? 3 : 1;
-        break;
-      case LineValue.Double:
-        scoreToAdd = this.isTspin ? 7 : 3;
-        break;
-      case LineValue.Triple:
-        scoreToAdd = this.isTspin ? 6 : 5;
-        break;
-      case LineValue.Tetris:
-        currTetris = true;
-        scoreToAdd = this.wasPreviouslyTetris ? 12 : 8;
-        break;
-      default:
-        break;
-    }
-    this.score += scoreToAdd;
-
-    /**
-     * Determine the next level. In case the user manages to scores
-     * a value which passes the next level's threshold, this logic
-     * is necessary to set the level correct in a single tick
-     */
-    let testLvl = this.level;
-    for (;;) {
-      if (this.score < testLvl * VARIABLE_GOAL_MULTIPLIER && testLvl !== 1) {
-        const lvlToSet = testLvl - 1;
-        if (lvlToSet !== this.level && this.ticksPerGreyLineSpawned !== 1) {
-          this.ticksPerGreyLineSpawned -= 1;
-        }
-        this.level = lvlToSet;
-        break;
-      }
-      testLvl += 1;
-    }
     this.isLockDelayEnabled = false;
-    this.wasPreviouslyTetris = currTetris;
     this.isTspin = false;
 
     /* Check if game is over */
@@ -483,7 +407,8 @@ export class Nemein {
              * increasing the number of ticks and spawning challenge lines
              * if certain ticks conditions are met
              */
-            this.numTicks = (this.numTicks + 1) % this.ticksPerGreyLineSpawned;
+            this.numTicks =
+              (this.numTicks + 1) % DEFAULT_NUM_TICKS_PER_GREY_LINE_SPAWNED;
             if (this.numTicks === 0) {
               this.board.spawnChallengeLine();
               this.corY -= 1;
@@ -596,9 +521,7 @@ export class Nemein {
       }
     }
 
-    logger.debug(
-      `[Nemein] This tick's interval: ${this.gameInterval}ms (Level: ${this.level})`
-    );
+    logger.debug(`[Nemein] This tick's interval: ${this.gameInterval}ms`);
 
     return {
       corX: this.corX,
@@ -613,8 +536,6 @@ export class Nemein {
         this.tetrominoManager.getSpawnedTetrominos(true)
       ),
       gameOver: this.gameOver,
-      score: this.score,
-      level: this.level,
       gameInterval: this.gameInterval,
     };
   }
