@@ -5,47 +5,46 @@
   "dependencies": {
     "bufferutil": "^4.0.7",
     "dotenv": "^16.0.3",
-    "nanoid": "^4.0.1",
-    "utf-8-validate": "^6.0.2",
+    "nanoid": "^4.0.2",
+    "utf-8-validate": "^6.0.3",
     "winston": "^3.8.2",
-    "ws": "^8.12.1"
+    "ws": "^8.13.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.4.4",
-    "@commitlint/config-conventional": "^17.4.4",
-    "@types/chai": "^4.3.4",
+    "@commitlint/cli": "^17.6.3",
+    "@commitlint/config-conventional": "^17.6.3",
+    "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^18.14.1",
+    "@types/node": "^20.2.3",
     "@types/ws": "^8.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.53.0",
-    "@typescript-eslint/parser": "^5.53.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
     "chai": "^4.3.7",
-    "eslint": "^8.34.0",
+    "eslint": "^8.41.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-config-prettier": "^8.6.0",
+    "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
     "husky": "^8.0.3",
     "is-ci": "^3.0.1",
     "mocha": "^10.2.0",
     "mocha-steps": "^1.3.0",
-    "prettier": "^2.8.4",
+    "prettier": "^2.8.8",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
+    "typescript": "^5.0.4"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "clean": "rm -rf node_modules && yarn cache clean",
+    "clean": "rm -rf dist node_modules",
     "dev": "concurrently --kill-others \"tsc -w\" \"nodemon dist/index.js\"",
-    "format": "yarn lint && yarn prettier --write .",
-    "lint": "eslint . --fix --ext .js,.ts",
+    "format": "pnpm lint && pnpm prettier --write src",
+    "lint": "eslint src --fix --ext .js,.ts",
     "postinstall": "is-ci || husky install",
     "start": "tsc && node dist/index.js",
     "test": " ",
-    "test-classic": "NODE_ENV=test mocha -r ts-node/register test/classic/*.ts",
-    "update": "yarn upgrade-interactive --latest"
+    "test:classic": "NODE_ENV=test mocha -r ts-node/register test/classic/*.ts"
   },
   "type": "module"
 }
