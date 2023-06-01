@@ -548,7 +548,7 @@ export class TetrominoManager {
       this.addNewTetrominoToQueue();
     }
 
-    return JSON.parse(JSON.stringify(this.activeTetromino));
+    return structuredClone(this.activeTetromino);
   }
 
   /**
@@ -556,7 +556,7 @@ export class TetrominoManager {
    * @returns Current active Tetromino
    */
   public getActiveTetromino(): Tetromino {
-    return JSON.parse(JSON.stringify(this.activeTetromino));
+    return structuredClone(this.activeTetromino);
   }
 
   /**
@@ -579,7 +579,7 @@ export class TetrominoManager {
       }
       return ret;
     }
-    return JSON.parse(JSON.stringify(this.spawnedTetrominos));
+    return structuredClone(this.spawnedTetrominos);
   }
 
   /**
@@ -587,7 +587,7 @@ export class TetrominoManager {
    * @returns Current held Tetromino
    */
   public getHeldTetromino(): Tetromino {
-    return JSON.parse(JSON.stringify(this.heldTetromino));
+    return structuredClone(this.heldTetromino);
   }
 
   /**

@@ -62,7 +62,7 @@ export class TetrisBoard {
    * @return Current play field of the game board
    */
   public getField(): TetrisCol[] {
-    return JSON.parse(JSON.stringify(this.field));
+    return structuredClone(this.field);
   }
 
   /**
