@@ -195,7 +195,7 @@ export class NemeinBoard {
    * field with all changes)
    */
   public getGameField(): NemeinCol[] {
-    return JSON.parse(JSON.stringify(this.gameField));
+    return structuredClone(this.gameField);
   }
 
   /**
@@ -206,7 +206,7 @@ export class NemeinBoard {
    * highlight to support Client rendering)
    */
   public getStatusField(clearStatus: boolean = true): TetrominoType[][] {
-    const ret = JSON.parse(JSON.stringify(this.statusField));
+    const ret = structuredClone(this.statusField);
     if (clearStatus) {
       for (let row = 0; row < this.boardHeight; row += 1) {
         this.setStatusFieldLine(row, TetrominoType.Blank);
