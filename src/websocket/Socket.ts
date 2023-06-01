@@ -108,6 +108,8 @@ export class Socket {
             data: gameStates,
           });
 
+          if (this.timeout) clearTimeout(this.timeout);
+
           this.timeout = setTimeout(timeout, gameStates.gameInterval);
 
           break;
