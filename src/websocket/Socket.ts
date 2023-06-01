@@ -17,7 +17,6 @@ const Opcodes = {
   DATA: 2, // Socket received data
   INPUT: 3, // Socket received game input
   TOGGLE: 4, // Socket received a game state toggle command
-  RESTART: 5, // Socket received a restart command
   PING: 9, // Socket received a ping command
   HEARTBEAT: 10, // Socket received a heartbeat
 };
@@ -117,23 +116,6 @@ export class Socket {
 
         case Opcodes.TOGGLE: {
           this.active = !this.active;
-
-          break;
-        }
-
-        case Opcodes.RESTART: {
-          this.instance =
-            this.instance instanceof Nemein ? new Nemein() : new Classic();
-
-          gameStates =
-            this.instance instanceof Nemein
-              ? this.instance.updateNemeinStates()
-              : this.instance.updateClassicStates();
-
-          this.send({
-            op: Opcodes.DATA,
-            data: gameStates,
-          });
 
           break;
         }
