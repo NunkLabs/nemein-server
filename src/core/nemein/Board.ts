@@ -7,6 +7,7 @@ import DmgManager, {
   DEFAULT_CHALLENGE_CELL_PHYS_REDUC,
   DEFAULT_DMG_PER_LINE,
   DefComposition,
+  CellStatus,
 } from "./DmgManager.js";
 
 import {
@@ -28,6 +29,7 @@ export type NemeinCell = {
   type: TetrominoType;
   hp: number;
   def: DefComposition;
+  status: CellStatus;
 };
 
 export type NemeinCol = {
@@ -39,6 +41,11 @@ export type ChallengeLine = {
   idx: number;
 };
 
+export type ClearRecord = {
+  idx: number;
+  lineTypeArr: TetrominoType[];
+};
+
 export class NemeinBoard {
   private boardWidth: number;
 
@@ -46,7 +53,7 @@ export class NemeinBoard {
 
   private gameField: NemeinCol[];
 
-  private statusField: TetrominoType[][];
+  private clearRecordsArr: ClearRecord[];
 
   private challengeLine: ChallengeLine;
 
@@ -59,7 +66,7 @@ export class NemeinBoard {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
     this.gameField = [];
-    this.statusField = [];
+    this.clearRecordsArr = [];
     this.challengeLine = {
       idx: boardHeight,
     };
@@ -79,8 +86,6 @@ export class NemeinBoard {
   private initFields(): void {
     for (let x = 0; x < this.boardWidth; x += 1) {
       const gameCol: NemeinCell[] = [];
-      const statusCol: TetrominoType[] = [];
-
       for (let y = 0; y < this.boardHeight; y += 1) {
         gameCol.push({
           type: TetrominoType.Blank,
@@ -91,9 +96,8 @@ export class NemeinBoard {
             coldRes: 0,
             lightningRes: 0,
           },
+          status: CellStatus.None,
         });
-
-        statusCol.push(TetrominoType.Blank);
       }
 
       const initCol: NemeinCol = {
@@ -102,7 +106,6 @@ export class NemeinBoard {
       };
 
       this.gameField.push(initCol);
-      this.statusField.push(statusCol);
     }
   }
 
@@ -177,16 +180,21 @@ export class NemeinBoard {
   }
 
   /**
-   * @brief: setStatusFieldLine - Fill a line of the status field to a value
-   * @param lineIdx - Line in status field to be filled
-   * @param value - Value to be filled
+   * @brief: setClearRecord - Push a record of line clear
+   * @param lineIdx - Line index to be filled
    */
-  private setStatusFieldLine(lineIdx: number, value: TetrominoType): void {
-    const statusCol: TetrominoType[] = [];
+  private setClearRecord(lineIdx: number): void {
+    const lineClearRecord: ClearRecord = {
+      idx: lineIdx,
+      lineTypeArr: [],
+    };
+
+    const lineTypeArr: TetrominoType[] = [];
     for (let col = 0; col < this.boardWidth; col += 1) {
-      statusCol.push(value);
+      lineTypeArr.push(this.gameField[col].colArr[lineIdx].type);
     }
-    this.statusField[lineIdx] = statusCol;
+
+    this.clearRecordsArr.push(lineClearRecord);
   }
 
   /**
@@ -199,17 +207,17 @@ export class NemeinBoard {
   }
 
   /**
-   * @brief: getStatusField: Get the current status field
-   * @param clearStatus - Indicating whether or not we want to clear the
-   * status field. Note that this is true by default
-   * @return Current status field of the board (i.e. field with lines
-   * highlight to support Client rendering)
+   * @brief: getClearRecords: Get the clear records
+   * @param clearStatus - Indicating whether or not we want to wipe the
+   * clear records. Note that this is true by default
+   * @return Current clear records of the board (i.e. indicating lines that
+   * are cleared to support Client rendering)
    */
-  public getStatusField(clearStatus: boolean = true): TetrominoType[][] {
-    const ret = structuredClone(this.statusField);
-    if (clearStatus) {
+  public getClearRecords(wipeRecords: boolean = true): ClearRecord[] {
+    const ret = structuredClone(this.clearRecordsArr);
+    if (wipeRecords) {
       for (let row = 0; row < this.boardHeight; row += 1) {
-        this.setStatusFieldLine(row, TetrominoType.Blank);
+        this.clearRecordsArr = [];
       }
     }
     return ret;
@@ -245,7 +253,7 @@ export class NemeinBoard {
        * Record line cleared in status field. Note that we want the
        * raw (i.e. unshifted line indexes)
        */
-      this.setStatusFieldLine(info.lineIdx, TetrominoType.Cleared);
+      this.setClearRecord(info.lineIdx);
 
       /**
        * The index of this line to be cleared might need an upward shift
@@ -284,7 +292,7 @@ export class NemeinBoard {
          * Record challenge line cleared in status field. Note that we want
          * the raw (i.e. unshifted line indexes)
          */
-        this.setStatusFieldLine(this.challengeLine.idx, TetrominoType.Cleared);
+        this.setClearRecord(this.challengeLine.idx);
         retNumLinesCompleted += 1;
         this.shiftLinesUpByOne(this.challengeLine.idx);
         this.challengeLine.idx += 1;
@@ -600,6 +608,7 @@ export class NemeinBoard {
           coldRes: DEFAULT_CHALLENGE_CELL_COLD_RES,
           lightningRes: DEFAULT_CHALLENGE_CELL_LIGHTNING_RES,
         },
+        status: CellStatus.None,
       };
       colArr[this.boardHeight - 1] = challengeCell;
     }
@@ -639,6 +648,7 @@ export class NemeinBoard {
               coldRes: 0,
               lightningRes: 0,
             },
+            status: CellStatus.None,
           };
           if (val) {
             if (firstPixel) {

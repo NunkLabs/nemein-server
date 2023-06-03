@@ -4,6 +4,7 @@ import {
   DEFAULT_BOARD_HEIGHT,
   NemeinBoard,
   NemeinCol,
+  ClearRecord,
 } from "./Board.js";
 
 import {
@@ -83,7 +84,7 @@ export type NemeinStates = {
   activeTetrominoRotate: TetrominoRotation;
   spawnedTetrominos: TetrominoType[];
   gameField: NemeinCol[];
-  statusField: TetrominoType[][];
+  clearRecordsArr: ClearRecord[];
   gameOver: boolean;
   gameInterval: number;
 };
@@ -531,7 +532,7 @@ export class Nemein {
       activeTetromino: activeTetromino.type,
       activeTetrominoRotate: activeTetromino.rotation,
       gameField: this.board.getGameField(),
-      statusField: this.board.getStatusField(),
+      clearRecordsArr: this.board.getClearRecords(),
       spawnedTetrominos: <TetrominoType[]>(
         this.tetrominoManager.getSpawnedTetrominos(true)
       ),
