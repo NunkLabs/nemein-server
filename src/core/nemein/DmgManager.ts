@@ -15,6 +15,15 @@ export const DEFAULT_CHALLENGE_CELL_FIRE_RES = 0;
 export const DEFAULT_CHALLENGE_CELL_COLD_RES = 0;
 export const DEFAULT_CHALLENGE_CELL_LIGHTNING_RES = 0;
 
+export enum CellStatus {
+  None,
+  Impaled,
+  Shocked,
+  Ignited,
+  Chilled,
+  Frozen,
+}
+
 export type DmgComposition = {
   physical: number;
   fire: number;
@@ -34,6 +43,11 @@ export type DefComposition = {
 export type LineClearInfo = {
   dmg: DmgComposition;
   lineIdx: number;
+};
+
+export type ClearRecord = {
+  idx: number;
+  lineType: TetrominoType[];
 };
 
 export class DmgManager {
