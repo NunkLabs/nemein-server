@@ -184,17 +184,15 @@ export class NemeinBoard {
    * @param lineIdx - Line index to be filled
    */
   private setClearRecord(lineIdx: number): void {
-    const lineClearRecord: ClearRecord = {
-      idx: lineIdx,
-      lineTypeArr: [],
-    };
-
-    const lineTypeArr: TetrominoType[] = [];
+    const lineClearedTypes: TetrominoType[] = [];
     for (let col = 0; col < this.boardWidth; col += 1) {
-      lineTypeArr.push(this.gameField[col].colArr[lineIdx].type);
+      lineClearedTypes.push(this.gameField[col].colArr[lineIdx].type);
     }
 
-    this.clearRecordsArr.push(lineClearRecord);
+    this.clearRecordsArr.push({
+      idx: lineIdx,
+      lineTypeArr: lineClearedTypes,
+    });
   }
 
   /**
