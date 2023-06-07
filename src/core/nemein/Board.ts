@@ -186,7 +186,18 @@ export class NemeinBoard {
   private setClearRecord(lineIdx: number): void {
     const lineClearedTypes: TetrominoType[] = [];
     for (let col = 0; col < this.boardWidth; col += 1) {
-      lineClearedTypes.push(this.gameField[col].colArr[lineIdx].type);
+      /**
+       * NOTE: For grey lines, we have to deal damage first
+       * to see if they are eligible to be cleared. However, after
+       * dealing dmg, the lines becomes blank. Unlike user-formed
+       * lines, those lines are guaranteed to be cleared so we do
+       * not need to deal dmg first hence the discrepancy
+       */
+      const cellType =
+        lineIdx === this.challengeLine.idx
+          ? TetrominoType.Grey
+          : this.gameField[col].colArr[lineIdx].type;
+      lineClearedTypes.push(cellType);
     }
 
     this.clearRecordsArr.push({
