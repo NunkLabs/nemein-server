@@ -5,9 +5,10 @@ import DmgManager, {
   DEFAULT_CHALLENGE_CELL_HP,
   DEFAULT_CHALLENGE_CELL_LIGHTNING_RES,
   DEFAULT_CHALLENGE_CELL_PHYS_REDUC,
-  DEFAULT_DMG_PER_LINE,
   DefComposition,
   CellStatus,
+  DmgType,
+  LineClearInfo,
 } from "./DmgManager.js";
 
 import {
@@ -44,6 +45,11 @@ export type ChallengeLine = {
 export type ClearRecord = {
   idx: number;
   lineTypeArr: TetrominoType[];
+  wasCrit: boolean;
+  dmgDealt: {
+    dominantDmgType: DmgType;
+    value: number;
+  };
 };
 
 export class NemeinBoard {
@@ -183,8 +189,14 @@ export class NemeinBoard {
    * @brief: setClearRecord - Push a record of line clear
    * @param lineIdx - Line index to be filled
    */
-  private setClearRecord(lineIdx: number): void {
+  private setClearRecord(
+    info: LineClearInfo,
+    isClearingChallengeLine: boolean
+  ): void {
     const lineClearedTypes: TetrominoType[] = [];
+    const lineIdx = isClearingChallengeLine
+      ? this.challengeLine.idx
+      : info.lineIdx;
     for (let col = 0; col < this.boardWidth; col += 1) {
       /**
        * NOTE: For grey lines, we have to deal damage first
@@ -193,16 +205,43 @@ export class NemeinBoard {
        * lines, those lines are guaranteed to be cleared so we do
        * not need to deal dmg first hence the discrepancy
        */
-      const cellType =
-        lineIdx === this.challengeLine.idx
-          ? TetrominoType.Grey
-          : this.gameField[col].colArr[lineIdx].type;
+      const cellType = isClearingChallengeLine
+        ? TetrominoType.Grey
+        : this.gameField[col].colArr[lineIdx].type;
       lineClearedTypes.push(cellType);
+    }
+
+    let highestDmgDealt = 0;
+    let higestDmgType = DmgType.Physical;
+
+    let dmgToCheck = info.dmg.physical;
+    if (dmgToCheck > highestDmgDealt) {
+      highestDmgDealt = dmgToCheck;
+    }
+    dmgToCheck = info.dmg.fire;
+    if (dmgToCheck > highestDmgDealt) {
+      highestDmgDealt = dmgToCheck;
+      higestDmgType = DmgType.Fire;
+    }
+    dmgToCheck = info.dmg.cold;
+    if (dmgToCheck > highestDmgDealt) {
+      highestDmgDealt = dmgToCheck;
+      higestDmgType = DmgType.Cold;
+    }
+    dmgToCheck = info.dmg.lightning;
+    if (dmgToCheck > highestDmgDealt) {
+      highestDmgDealt = dmgToCheck;
+      higestDmgType = DmgType.Lightning;
     }
 
     this.clearRecordsArr.push({
       idx: lineIdx,
       lineTypeArr: lineClearedTypes,
+      wasCrit: info.criticalHit,
+      dmgDealt: {
+        dominantDmgType: higestDmgType,
+        value: highestDmgDealt,
+      },
     });
   }
 
@@ -262,7 +301,7 @@ export class NemeinBoard {
        * Record line cleared in status field. Note that we want the
        * raw (i.e. unshifted line indexes)
        */
-      this.setClearRecord(info.lineIdx);
+      this.setClearRecord(info, false /* isClearingChallengeLine */);
 
       /**
        * The index of this line to be cleared might need an upward shift
@@ -280,28 +319,24 @@ export class NemeinBoard {
        * just deal damage to one
        */
       if (this.challengeLine.idx !== info.lineIdx) {
-        this.dmgManager.dealDmgToLine(info.lineIdx, {
-          physical: Math.floor(DEFAULT_DMG_PER_LINE / this.boardWidth),
-          fire: 0,
-          cold: 0,
-          lightning: 0,
-          /**
-           * NOTE: Don't care about other types of dmg here because
-           * we'll be guaranteed with the 2 facts:
-           * 1. User formed lines have no armour
-           * 2. Only deal phys dmg to user formed lines
-           */
-        });
+        this.dmgManager.dealDmgToLine(info, false /* isHittingChallengeLine */);
         retNumLinesCompleted += 1;
         this.shiftLinesUpByOne(info.lineIdx);
       }
 
-      if (this.dmgManager.dealDmgToChallengeLine(info)) {
+      const challengeLineClearInfo = this.dmgManager.dealDmgToLine(
+        info,
+        true /* isHittingChallengeLine */
+      );
+      if (challengeLineClearInfo.isLineCleared) {
         /**
          * Record challenge line cleared in status field. Note that we want
          * the raw (i.e. unshifted line indexes)
          */
-        this.setClearRecord(this.challengeLine.idx);
+        this.setClearRecord(
+          challengeLineClearInfo.info,
+          true /* isClearingChallengeLine */
+        );
         retNumLinesCompleted += 1;
         this.shiftLinesUpByOne(this.challengeLine.idx);
         this.challengeLine.idx += 1;

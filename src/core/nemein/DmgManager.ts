@@ -24,6 +24,13 @@ export enum CellStatus {
   Frozen,
 }
 
+export enum DmgType {
+  Physical,
+  Fire,
+  Cold,
+  Lightning,
+}
+
 export type DmgComposition = {
   physical: number;
   fire: number;
@@ -43,11 +50,12 @@ export type DefComposition = {
 export type LineClearInfo = {
   dmg: DmgComposition;
   lineIdx: number;
+  criticalHit: boolean;
 };
 
-export type ClearRecord = {
-  idx: number;
-  lineType: TetrominoType[];
+export type LineClearInfoPostMitigation = {
+  info: LineClearInfo;
+  isLineCleared: boolean;
 };
 
 export class DmgManager {
@@ -114,6 +122,7 @@ export class DmgManager {
             lightning: 0 /* TODO: Handle more types of dmg */,
           },
           lineIdx: row,
+          criticalHit: isLineValidForCrit,
         });
       }
     }
@@ -122,71 +131,86 @@ export class DmgManager {
   }
 
   /**
-   * @brief Attempt to deal dmg to the current challenge line
-   * @param info - Info containing dmg pool info
-   * @returns true if dmg pool is enough to clear the current challenge line. False otw
-   */
-  public dealDmgToChallengeLine(info: LineClearInfo): boolean {
-    let ret = false;
-
-    if (this.challengeLine.idx < this.boardHeight) {
-      const dmgCompPerCell: DmgComposition = {
-        physical: Math.floor(info.dmg.physical / this.boardWidth),
-        fire: Math.floor(info.dmg.fire / this.boardWidth),
-        cold: Math.floor(info.dmg.cold / this.boardWidth),
-        lightning: Math.floor(info.dmg.lightning / this.boardWidth),
-      };
-
-      ret =
-        this.dealDmgToLine(this.challengeLine.idx, dmgCompPerCell) ===
-        this.boardWidth;
-    }
-
-    return ret;
-  }
-
-  /**
    * @brief: Deals dmg to all available cells in a line
-   * @param lineIdx - Index of line in board to clear
-   * @param dmgCompPerCell - Composition of damage types & values to be dealt
-   * per cell
-   * @returns number of cells cleared in the line
+   * @param info - Info containing index of line to deal dmg + dmg pool
+   * @param isHittingChallengeLine - Bool indicating whether or not we're
+   * hitting a challenge line
+   * @returns object containing post-mitigation dmg pool + whether or not the
+   * line is actually cleared
    */
   public dealDmgToLine(
-    lineIdx: number,
-    dmgCompPerCell: DmgComposition
-  ): number {
-    let retNumCellsCleared = 0;
+    info: LineClearInfo,
+    isHittingChallengeLine: boolean
+  ): LineClearInfoPostMitigation {
+    const ret: LineClearInfoPostMitigation = { info, isLineCleared: false };
+    let numCellsCleared = 0;
+    const lineIdx = isHittingChallengeLine
+      ? this.challengeLine.idx
+      : info.lineIdx;
+
+    const dmgCompPerCell: DmgComposition = {
+      physical: Math.floor(info.dmg.physical / this.boardWidth),
+      fire: Math.floor(info.dmg.fire / this.boardWidth),
+      cold: Math.floor(info.dmg.cold / this.boardWidth),
+      lightning: Math.floor(info.dmg.lightning / this.boardWidth),
+    };
+
+    let totalPhysDmgDealt = 0;
+    let totalFireDmgDealt = 0;
+    let totalColdDmgDealt = 0;
+    let totalLightningDmgDealt = 0;
 
     if (lineIdx >= 0 && lineIdx < this.boardHeight) {
       for (let col = 0; col < this.boardWidth; col += 1) {
         const cell = this.field[col].colArr[lineIdx];
 
-        let dmgDealToCell = 0;
-        dmgDealToCell +=
+        const physDmgDealtToCell =
           dmgCompPerCell.physical *
           ((DEFAULT_MAX_PHYS_REDUC - cell.def.physReduc) /
             DEFAULT_MAX_PHYS_REDUC);
-        dmgDealToCell +=
+        totalPhysDmgDealt += physDmgDealtToCell;
+
+        const fireDmgDealtToCell =
           dmgCompPerCell.fire *
           ((DEFAULT_MAX_ELE_RES - cell.def.fireRes) / DEFAULT_MAX_ELE_RES);
-        dmgDealToCell +=
+        totalFireDmgDealt += fireDmgDealtToCell;
+
+        const coldDmgDealtToCell =
           dmgCompPerCell.cold *
           ((DEFAULT_MAX_ELE_RES - cell.def.coldRes) / DEFAULT_MAX_ELE_RES);
-        dmgDealToCell +=
+        totalColdDmgDealt += coldDmgDealtToCell;
+
+        const lightningDmgDealtToCell =
           dmgCompPerCell.lightning *
           ((DEFAULT_MAX_ELE_RES - cell.def.lightningRes) / DEFAULT_MAX_ELE_RES);
+        totalLightningDmgDealt += lightningDmgDealtToCell;
         /* TODO: Handle more dmg + def types later */
 
-        cell.hp -= dmgDealToCell;
+        cell.hp -=
+          physDmgDealtToCell +
+          fireDmgDealtToCell +
+          coldDmgDealtToCell +
+          lightningDmgDealtToCell;
+
         if (cell.hp <= 0) {
-          retNumCellsCleared += 1;
+          numCellsCleared += 1;
           cell.type = TetrominoType.Blank;
         }
       }
+
+      if (isHittingChallengeLine) {
+        ret.info.dmg = {
+          physical: totalPhysDmgDealt,
+          fire: totalFireDmgDealt,
+          cold: totalColdDmgDealt,
+          lightning: totalLightningDmgDealt,
+        };
+      }
+
+      ret.isLineCleared = numCellsCleared === this.boardWidth;
     }
 
-    return retNumCellsCleared;
+    return ret;
   }
 }
 
