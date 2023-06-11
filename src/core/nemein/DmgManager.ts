@@ -4,6 +4,7 @@ import { TetrominoType } from "./TetrominoManager.js";
 /* Dmg consts */
 export const DEFAULT_DMG_PER_LINE = 100;
 export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
+export const DEFAULT_IMPALE_HIT_PERC = 0.1;
 
 /* Defense consts */
 export const DEFAULT_CELL_HP = 10;
@@ -14,6 +15,11 @@ export const DEFAULT_MAX_ELE_RES = 75;
 export const DEFAULT_CHALLENGE_CELL_FIRE_RES = 0;
 export const DEFAULT_CHALLENGE_CELL_COLD_RES = 0;
 export const DEFAULT_CHALLENGE_CELL_LIGHTNING_RES = 0;
+
+/* RNG consts */
+export const DEFAULT_3_LINES_BASE_CHANCE_ACTIVATE_PERKS = 0.3;
+export const DEFAULT_4_LINES_BASE_CHANCE_ACTIVATE_PERKS = 0.5;
+export const DEFAULT_CRIT_INCREASED_CHANCE_ACTIVATE_PERKS = 1.0;
 
 export enum CellStatus {
   None,
@@ -30,6 +36,20 @@ export enum DmgType {
   Cold,
   Lightning,
 }
+
+export type PerksInfo = {
+  /* Phys */
+  impale: boolean;
+  impaleExtraDmgPerCell: number;
+  /* Lightning */
+  shock: boolean;
+  /* Fire */
+  ignite: boolean;
+  /* Cold */
+  chill: boolean;
+  freeze: boolean;
+  /* TODO: Populate this later on with other types of ailments */
+};
 
 export type DmgComposition = {
   physical: number;
@@ -67,6 +87,8 @@ export class DmgManager {
 
   private challengeLine: ChallengeLine;
 
+  private perksInfo: PerksInfo;
+
   constructor(
     field: NemeinCol[],
     boardWidth: number,
@@ -77,6 +99,14 @@ export class DmgManager {
     this.boardHeight = boardHeight;
     this.boardWidth = boardWidth;
     this.challengeLine = challengeLine;
+    this.perksInfo = {
+      impale: false,
+      impaleExtraDmgPerCell: 0,
+      shock: false,
+      ignite: false,
+      chill: false,
+      freeze: false,
+    };
   }
 
   /**
@@ -127,6 +157,8 @@ export class DmgManager {
       }
     }
 
+    this.rollAndActivatePerks(ret);
+
     return ret;
   }
 
@@ -166,8 +198,9 @@ export class DmgManager {
 
         const physDmgDealtToCell =
           dmgCompPerCell.physical *
-          ((DEFAULT_MAX_PHYS_REDUC - cell.def.physReduc) /
-            DEFAULT_MAX_PHYS_REDUC);
+            ((DEFAULT_MAX_PHYS_REDUC - cell.def.physReduc) /
+              DEFAULT_MAX_PHYS_REDUC) +
+          this.perksInfo.impaleExtraDmgPerCell;
         totalPhysDmgDealt += physDmgDealtToCell;
 
         const fireDmgDealtToCell =
@@ -211,6 +244,82 @@ export class DmgManager {
     }
 
     return ret;
+  }
+
+  /**
+   * @brief: Roll and activate perks based on the lines clear info
+   * @param infoArr - Array containing lines being cleared
+   */
+  private rollAndActivatePerks(infoArr: LineClearInfo[]) {
+    const numLinesCleared = infoArr.length;
+    if (numLinesCleared) {
+      let totalPhysDmgPool = 0;
+      let totalFireDmgPool = 0;
+      let totalColdDmgPool = 0;
+      let totalLightningDmgPool = 0;
+      let criticalHitFound = false;
+
+      for (let i = 0; i < numLinesCleared; i += 1) {
+        const lineDmgComposition = infoArr[i].dmg;
+        totalPhysDmgPool += lineDmgComposition.physical;
+        totalFireDmgPool += lineDmgComposition.fire;
+        totalColdDmgPool += lineDmgComposition.cold;
+        totalLightningDmgPool += lineDmgComposition.lightning;
+        criticalHitFound ||= infoArr[i].criticalHit;
+      }
+
+      let rollChance = 0;
+      switch (numLinesCleared) {
+        case 3:
+          rollChance = DEFAULT_3_LINES_BASE_CHANCE_ACTIVATE_PERKS;
+          break;
+        case 4:
+          rollChance = DEFAULT_4_LINES_BASE_CHANCE_ACTIVATE_PERKS;
+          break;
+        default:
+          break;
+      }
+
+      if (rollChance) {
+        /* Impale doesn't get any bonuses from crit */
+        const impaleRollChance = rollChance;
+        if (criticalHitFound) {
+          const increasedCritChance =
+            rollChance * DEFAULT_CRIT_INCREASED_CHANCE_ACTIVATE_PERKS;
+          rollChance += increasedCritChance;
+        }
+
+        /* Each perk is rolled independently */
+        if (totalPhysDmgPool) {
+          if (Math.random() < impaleRollChance) {
+            this.perksInfo.impale = true;
+            const currentTotalImpaleDmg =
+              this.perksInfo.impaleExtraDmgPerCell *
+              this.boardWidth *
+              numLinesCleared;
+            /* Next impale extra dmg = (current phys dmg pool + current impale extra dmg) * DEFAULT_IMPALE_HIT_PERC */
+            this.perksInfo.impaleExtraDmgPerCell +=
+              ((totalPhysDmgPool + currentTotalImpaleDmg) *
+                DEFAULT_IMPALE_HIT_PERC) /
+              numLinesCleared /
+              this.boardWidth;
+          } else {
+            this.perksInfo.impale = false;
+            this.perksInfo.impaleExtraDmgPerCell = 0;
+          }
+        }
+        if (totalLightningDmgPool) {
+          this.perksInfo.shock = Math.random() < rollChance;
+        }
+        if (totalFireDmgPool) {
+          this.perksInfo.ignite = Math.random() < rollChance;
+        }
+        if (totalColdDmgPool) {
+          this.perksInfo.chill = Math.random() < rollChance;
+          this.perksInfo.freeze = Math.random() < rollChance;
+        }
+      }
+    }
   }
 }
 
