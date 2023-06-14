@@ -5,6 +5,8 @@ import { TetrominoType } from "./TetrominoManager.js";
 export const DEFAULT_DMG_PER_LINE = 100;
 export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
 export const DEFAULT_IMPALE_HIT_PERC = 0.1;
+export const DEFAULT_DAMAGING_AILMENT_DURATION_TICKS = 4;
+export const DEFAULT_IGNITE_HIT_PERC = 0.8;
 
 /* Defense consts */
 export const DEFAULT_CELL_HP = 10;
@@ -78,6 +80,12 @@ export type LineClearInfoPostMitigation = {
   isLineCleared: boolean;
 };
 
+export type DamagingAilmentInstance = {
+  dmgPerTick: number;
+  durationTicks: number;
+  dmgType: DmgType;
+};
+
 export class DmgManager {
   private field: NemeinCol[];
 
@@ -88,6 +96,8 @@ export class DmgManager {
   private challengeLine: ChallengeLine;
 
   private perksInfo: PerksInfo;
+
+  private damgingAilmentInstancesMap: Map<DmgType, DamagingAilmentInstance[]>;
 
   constructor(
     field: NemeinCol[],
@@ -107,6 +117,13 @@ export class DmgManager {
       chill: false,
       freeze: false,
     };
+    this.damgingAilmentInstancesMap = new Map<
+      DmgType,
+      DamagingAilmentInstance[]
+    >([
+      [DmgType.Fire, []],
+      /* Add more if needed */
+    ]);
   }
 
   /**
@@ -247,6 +264,72 @@ export class DmgManager {
   }
 
   /**
+   * @brief Deal damaging ailments to the current challenge line
+   * @returns - Array of line clear info if multiple challange lines
+   * are to be cleared in a single tick
+   */
+  public dealDamagingAilments(): LineClearInfoPostMitigation[] {
+    const ret: LineClearInfoPostMitigation[] = [];
+    this.damgingAilmentInstancesMap.forEach(
+      (value: DamagingAilmentInstance[], key: DmgType) => {
+        let instanceInEffect: DamagingAilmentInstance = {
+          dmgPerTick: 0,
+          durationTicks: 0,
+          dmgType: DmgType.Physical,
+        };
+        for (let i = 0; i < value.length; i += 1) {
+          const ailmentInstance = value[i];
+          if (!ailmentInstance.durationTicks) {
+            value.splice(i, 1);
+            i -= 1;
+          } else {
+            ailmentInstance.durationTicks -= 1;
+            switch (key) {
+              /* Ignite picks the instance that rolls the highest dmg per tick */
+              case DmgType.Fire:
+                if (ailmentInstance.dmgPerTick > instanceInEffect.dmgPerTick) {
+                  instanceInEffect = ailmentInstance;
+                }
+                break;
+              case DmgType.Cold:
+                break;
+              case DmgType.Lightning:
+                break;
+              default:
+                break;
+            }
+          }
+        }
+
+        const ailmentDmgInfo: DmgComposition = {
+          physical: 0,
+          fire:
+            instanceInEffect.dmgType === DmgType.Fire
+              ? instanceInEffect.dmgPerTick
+              : 0,
+          cold:
+            instanceInEffect.dmgType === DmgType.Cold
+              ? instanceInEffect.dmgPerTick
+              : 0,
+          lightning:
+            instanceInEffect.dmgType === DmgType.Lightning
+              ? instanceInEffect.dmgPerTick
+              : 0,
+        };
+        const clearInfo: LineClearInfoPostMitigation = this.dealDmgToLine(
+          { dmg: ailmentDmgInfo, lineIdx: 0, criticalHit: false },
+          true /* isHittingChallengeLine */
+        );
+        if (clearInfo.isLineCleared) {
+          ret.push(clearInfo);
+        }
+      }
+    );
+
+    return ret;
+  }
+
+  /**
    * @brief: Roll and activate perks based on the lines clear info
    * @param infoArr - Array containing lines being cleared
    */
@@ -313,6 +396,20 @@ export class DmgManager {
         }
         if (totalFireDmgPool) {
           this.perksInfo.ignite = Math.random() < rollChance;
+          if (this.perksInfo.ignite) {
+            const igniteInstancesArr = this.damgingAilmentInstancesMap.get(
+              DmgType.Fire
+            );
+            if (igniteInstancesArr) {
+              igniteInstancesArr.push({
+                dmgPerTick:
+                  (totalFireDmgPool * DEFAULT_IGNITE_HIT_PERC) /
+                  DEFAULT_DAMAGING_AILMENT_DURATION_TICKS,
+                durationTicks: DEFAULT_DAMAGING_AILMENT_DURATION_TICKS,
+                dmgType: DmgType.Fire,
+              });
+            }
+          }
         }
         if (totalColdDmgPool) {
           this.perksInfo.chill = Math.random() < rollChance;

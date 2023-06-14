@@ -659,6 +659,21 @@ export class NemeinBoard {
   }
 
   /**
+   * @brief Handle the additional logic when a tick occurs
+   */
+  public notifyTick(): void {
+    const clearInfoArr = this.dmgManager.dealDamagingAilments();
+    for (let i = 0; i < clearInfoArr.length; i += 1) {
+      this.setClearRecord(
+        clearInfoArr[i].info,
+        true /* isClearingChallengeLine */
+      );
+      this.shiftLinesUpByOne(this.challengeLine.idx);
+      this.challengeLine.idx += 1;
+    }
+  }
+
+  /**
    * @brief: bitmapToNemeinCols: Convert a 1D array bitmap into an array of
    * NemeinCols
    * @param bitmap: Bitmap to be converted
