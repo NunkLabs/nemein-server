@@ -436,6 +436,8 @@ export class Nemein {
               }
               this.corY = testCorY;
             }
+
+            this.board.notifyTick();
             break;
           }
           case NemeinCommand.HardDrop: {
