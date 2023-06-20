@@ -9,6 +9,7 @@ import DmgManager, {
   CellStatus,
   DmgType,
   LineClearInfo,
+  AilmentReturnInfo,
 } from "./DmgManager.js";
 
 import {
@@ -661,16 +662,19 @@ export class NemeinBoard {
   /**
    * @brief Handle the additional logic when a tick occurs
    */
-  public notifyTick(): void {
-    const clearInfoArr = this.dmgManager.dealDamagingAilments();
-    for (let i = 0; i < clearInfoArr.length; i += 1) {
+  public notifyTick(): number {
+    const ailmentRetInfo: AilmentReturnInfo = this.dmgManager.procAilments();
+    const { lineClearInfoArr } = ailmentRetInfo;
+    for (let i = 0; i < lineClearInfoArr.length; i += 1) {
       this.setClearRecord(
-        clearInfoArr[i].info,
+        lineClearInfoArr[i].info,
         true /* isClearingChallengeLine */
       );
       this.shiftLinesUpByOne(this.challengeLine.idx);
       this.challengeLine.idx += 1;
     }
+
+    return ailmentRetInfo.newGameIntervalMs;
   }
 
   /**

@@ -1,4 +1,5 @@
 import { ChallengeLine, NemeinCol } from "./Board.js";
+import { DEFAULT_TIME_INTERVAL_MS } from "./Nemein.js";
 import { TetrominoType } from "./TetrominoManager.js";
 
 /* Dmg consts */
@@ -7,6 +8,15 @@ export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
 export const DEFAULT_IMPALE_HIT_PERC = 0.1;
 export const DEFAULT_DAMAGING_AILMENT_DURATION_TICKS = 4;
 export const DEFAULT_IGNITE_HIT_PERC = 0.8;
+
+export const DEFAULT_CHILL_DURATION_TICKS = 2;
+export const DEFAULT_CHILL_EFFECTIVENESS_PERC = 0.2;
+export const DEFAULT_MIN_CHILL_EFFECTIVENESS = 0.05;
+export const DEFAULT_MAX_CHILL_EFFECTIVENESS = 0.3;
+
+export const DEFAULT_FREEZE_BASE_EFFECTIVENESS = 1;
+export const DEFAULT_FREEZE_DURATION_TICKS = 1;
+export const DEFAULT_FREEZE_EFFECTIVENESS_PERC = 0.05;
 
 /* Defense consts */
 export const DEFAULT_CELL_HP = 10;
@@ -37,6 +47,16 @@ export enum DmgType {
   Fire,
   Cold,
   Lightning,
+}
+
+export enum DamagingAilment {
+  Ignite,
+}
+
+export enum NonDamagingAilment {
+  Chill,
+  Freeze,
+  Shock,
 }
 
 export type PerksInfo = {
@@ -86,6 +106,16 @@ export type DamagingAilmentInstance = {
   dmgType: DmgType;
 };
 
+export type NonDamagingAilmentInstance = {
+  effectiveness: number;
+  durationTicks: number;
+};
+
+export type AilmentReturnInfo = {
+  newGameIntervalMs: number;
+  lineClearInfoArr: LineClearInfoPostMitigation[];
+};
+
 export class DmgManager {
   private field: NemeinCol[];
 
@@ -97,7 +127,15 @@ export class DmgManager {
 
   private perksInfo: PerksInfo;
 
-  private damgingAilmentInstancesMap: Map<DmgType, DamagingAilmentInstance[]>;
+  private damgingAilmentInstancesMap: Map<
+    DamagingAilment,
+    DamagingAilmentInstance[]
+  >;
+
+  private nonDamagingAilmentInstancesMap: Map<
+    NonDamagingAilment,
+    NonDamagingAilmentInstance[]
+  >;
 
   constructor(
     field: NemeinCol[],
@@ -118,10 +156,18 @@ export class DmgManager {
       freeze: false,
     };
     this.damgingAilmentInstancesMap = new Map<
-      DmgType,
+      DamagingAilment,
       DamagingAilmentInstance[]
     >([
-      [DmgType.Fire, []],
+      [DamagingAilment.Ignite, []],
+      /* Add more if needed */
+    ]);
+    this.nonDamagingAilmentInstancesMap = new Map<
+      NonDamagingAilment,
+      NonDamagingAilmentInstance[]
+    >([
+      [NonDamagingAilment.Chill, []],
+      [NonDamagingAilment.Freeze, []],
       /* Add more if needed */
     ]);
   }
@@ -268,10 +314,66 @@ export class DmgManager {
    * @returns - Array of line clear info if multiple challange lines
    * are to be cleared in a single tick
    */
-  public dealDamagingAilments(): LineClearInfoPostMitigation[] {
+  public procAilments(): AilmentReturnInfo {
+    const ret: AilmentReturnInfo = {
+      newGameIntervalMs: DEFAULT_TIME_INTERVAL_MS,
+      lineClearInfoArr: [],
+    };
+
+    ret.lineClearInfoArr = this.procDamagingAilments();
+    ret.newGameIntervalMs = this.procNonDamagingAilments();
+
+    return ret;
+  }
+
+  /**
+   * @brief Check if an ailment has expired by checking if there's no pending instance of this
+   * ailment type
+   * @param ailmentInstances - Instances of ailment
+   * @param ailmentType - Ailment type to check
+   * @returns True if ailment of this type expired. False otw
+   */
+  private ailmentExpired(
+    ailmentInstances: DamagingAilmentInstance[] | NonDamagingAilmentInstance[],
+    ailmentType: DamagingAilment | NonDamagingAilment
+  ): boolean {
+    let ret = false;
+    if (!ailmentInstances.length) {
+      switch (ailmentType) {
+        /* Ignite picks the instance that rolls the highest dmg per tick */
+        case DamagingAilment.Ignite:
+          this.perksInfo.ignite = false;
+          break;
+        case NonDamagingAilment.Chill:
+          this.perksInfo.chill = false;
+          break;
+        case NonDamagingAilment.Freeze:
+          this.perksInfo.freeze = false;
+          break;
+        case NonDamagingAilment.Shock:
+          this.perksInfo.shock = false;
+          break;
+        default:
+          break;
+      }
+      ret = true;
+    }
+
+    return ret;
+  }
+
+  /**
+   * @brief Proc and deal damage to challenge line due to damaging ailment
+   * @returns Post mitigation line clear info if challenge lines are cleared
+   */
+  private procDamagingAilments(): LineClearInfoPostMitigation[] {
     const ret: LineClearInfoPostMitigation[] = [];
     this.damgingAilmentInstancesMap.forEach(
-      (value: DamagingAilmentInstance[], key: DmgType) => {
+      (value: DamagingAilmentInstance[], key: DamagingAilment) => {
+        if (this.ailmentExpired(value, key)) {
+          return;
+        }
+
         let instanceInEffect: DamagingAilmentInstance = {
           dmgPerTick: 0,
           durationTicks: 0,
@@ -286,14 +388,10 @@ export class DmgManager {
             ailmentInstance.durationTicks -= 1;
             switch (key) {
               /* Ignite picks the instance that rolls the highest dmg per tick */
-              case DmgType.Fire:
+              case DamagingAilment.Ignite:
                 if (ailmentInstance.dmgPerTick > instanceInEffect.dmgPerTick) {
                   instanceInEffect = ailmentInstance;
                 }
-                break;
-              case DmgType.Cold:
-                break;
-              case DmgType.Lightning:
                 break;
               default:
                 break;
@@ -322,6 +420,49 @@ export class DmgManager {
         );
         if (clearInfo.isLineCleared) {
           ret.push(clearInfo);
+        }
+      }
+    );
+
+    return ret;
+  }
+
+  /**
+   * @brief Proc and apply effect of non-damaging ailments
+   * @returns New game interval being affected by the ailments
+   */
+  private procNonDamagingAilments(): number {
+    let ret = DEFAULT_TIME_INTERVAL_MS;
+
+    this.nonDamagingAilmentInstancesMap.forEach(
+      (value: NonDamagingAilmentInstance[], key: NonDamagingAilment) => {
+        if (this.ailmentExpired(value, key)) {
+          return;
+        }
+
+        for (let i = 0; i < value.length; i += 1) {
+          const ailmentInstance = value[i];
+          if (!ailmentInstance.durationTicks) {
+            value.splice(i, 1);
+            i -= 1;
+          } else {
+            ailmentInstance.durationTicks -= 1;
+            switch (key) {
+              case NonDamagingAilment.Chill:
+              /* Fallthrough */
+              case NonDamagingAilment.Freeze: {
+                const newGameIntervalMs =
+                  DEFAULT_TIME_INTERVAL_MS *
+                  (1 + ailmentInstance.effectiveness);
+                if (newGameIntervalMs > ret) {
+                  ret = newGameIntervalMs;
+                }
+                break;
+              }
+              default:
+                break;
+            }
+          }
         }
       }
     );
@@ -374,47 +515,119 @@ export class DmgManager {
 
         /* Each perk is rolled independently */
         if (totalPhysDmgPool) {
-          if (Math.random() < impaleRollChance) {
-            this.perksInfo.impale = true;
-            const currentTotalImpaleDmg =
-              this.perksInfo.impaleExtraDmgPerCell *
-              this.boardWidth *
-              numLinesCleared;
-            /* Next impale extra dmg = (current phys dmg pool + current impale extra dmg) * DEFAULT_IMPALE_HIT_PERC */
-            this.perksInfo.impaleExtraDmgPerCell +=
-              ((totalPhysDmgPool + currentTotalImpaleDmg) *
-                DEFAULT_IMPALE_HIT_PERC) /
-              numLinesCleared /
-              this.boardWidth;
-          } else {
-            this.perksInfo.impale = false;
-            this.perksInfo.impaleExtraDmgPerCell = 0;
-          }
+          this.handleImpale(
+            totalPhysDmgPool,
+            impaleRollChance,
+            numLinesCleared
+          );
         }
         if (totalLightningDmgPool) {
           this.perksInfo.shock = Math.random() < rollChance;
         }
         if (totalFireDmgPool) {
-          this.perksInfo.ignite = Math.random() < rollChance;
-          if (this.perksInfo.ignite) {
-            const igniteInstancesArr = this.damgingAilmentInstancesMap.get(
-              DmgType.Fire
-            );
-            if (igniteInstancesArr) {
-              igniteInstancesArr.push({
-                dmgPerTick:
-                  (totalFireDmgPool * DEFAULT_IGNITE_HIT_PERC) /
-                  DEFAULT_DAMAGING_AILMENT_DURATION_TICKS,
-                durationTicks: DEFAULT_DAMAGING_AILMENT_DURATION_TICKS,
-                dmgType: DmgType.Fire,
-              });
-            }
-          }
+          this.handleIgnite(totalFireDmgPool, rollChance);
         }
         if (totalColdDmgPool) {
-          this.perksInfo.chill = Math.random() < rollChance;
-          this.perksInfo.freeze = Math.random() < rollChance;
+          this.handleChillFreeze(totalColdDmgPool, rollChance, numLinesCleared);
         }
+      }
+    }
+  }
+
+  /**
+   * @brief Handler logic for impale & prepare effect
+   * @param totalPhysDmgPool - Total phys damage pool dealt
+   * @param impaleRollChance - Impale roll chance
+   * @param numLinesCleared - Number of lines cleared in this tick
+   */
+  private handleImpale(
+    totalPhysDmgPool: number,
+    impaleRollChance: number,
+    numLinesCleared: number
+  ) {
+    if (Math.random() < impaleRollChance) {
+      this.perksInfo.impale = true;
+      const currentTotalImpaleDmg =
+        this.perksInfo.impaleExtraDmgPerCell *
+        this.boardWidth *
+        numLinesCleared;
+      /* Next impale extra dmg = (current phys dmg pool + current impale extra dmg) * DEFAULT_IMPALE_HIT_PERC */
+      this.perksInfo.impaleExtraDmgPerCell +=
+        ((totalPhysDmgPool + currentTotalImpaleDmg) * DEFAULT_IMPALE_HIT_PERC) /
+        numLinesCleared /
+        this.boardWidth;
+    } else {
+      this.perksInfo.impale = false;
+      this.perksInfo.impaleExtraDmgPerCell = 0;
+    }
+  }
+
+  /**
+   * @brief Handler logic for ignite & prepare effect
+   * @param totalFireDmgPool - Total fire damage pool dealt
+   * @param igniteRollChance - Ignite roll chance
+   */
+  private handleIgnite(totalFireDmgPool: number, igniteRollChance: number) {
+    this.perksInfo.ignite = Math.random() < igniteRollChance;
+    if (this.perksInfo.ignite) {
+      const igniteInstancesArr = this.damgingAilmentInstancesMap.get(
+        DamagingAilment.Ignite
+      );
+      if (igniteInstancesArr) {
+        igniteInstancesArr.push({
+          dmgPerTick:
+            (totalFireDmgPool * DEFAULT_IGNITE_HIT_PERC) /
+            DEFAULT_DAMAGING_AILMENT_DURATION_TICKS,
+          durationTicks: DEFAULT_DAMAGING_AILMENT_DURATION_TICKS,
+          dmgType: DmgType.Fire,
+        });
+      }
+    }
+  }
+
+  /**
+   * @brief Handler logic for chill & freeze
+   * @param totalColdDmgPool - Total cold damage pool dealt
+   * @param freezeRollChance - Freeze roll chance
+   * @param numLinesCleared - Number of lines cleared in this tick
+   */
+  private handleChillFreeze(
+    totalColdDmgPool: number,
+    freezeRollChance: number,
+    numLinesCleared: number
+  ) {
+    this.perksInfo.chill = true;
+    const chillInstancesArr = this.nonDamagingAilmentInstancesMap.get(
+      NonDamagingAilment.Chill
+    );
+    const totalHpCleared = numLinesCleared * DEFAULT_CELL_HP * this.boardWidth;
+    const chillEffectiveness = Math.min(
+      (totalColdDmgPool / totalHpCleared) * DEFAULT_CHILL_EFFECTIVENESS_PERC,
+      DEFAULT_MAX_CHILL_EFFECTIVENESS
+    );
+    if (
+      chillInstancesArr &&
+      chillEffectiveness >= DEFAULT_MIN_CHILL_EFFECTIVENESS
+    ) {
+      chillInstancesArr.push({
+        effectiveness: chillEffectiveness,
+        durationTicks: DEFAULT_CHILL_DURATION_TICKS,
+      });
+    }
+
+    this.perksInfo.freeze = Math.random() < freezeRollChance;
+    if (this.perksInfo.freeze) {
+      const freezeInstancesArr = this.nonDamagingAilmentInstancesMap.get(
+        NonDamagingAilment.Freeze
+      );
+      const freezeEffectiveness =
+        DEFAULT_FREEZE_BASE_EFFECTIVENESS +
+        (totalColdDmgPool / totalHpCleared) * DEFAULT_FREEZE_EFFECTIVENESS_PERC;
+      if (freezeInstancesArr) {
+        freezeInstancesArr.push({
+          effectiveness: freezeEffectiveness,
+          durationTicks: DEFAULT_FREEZE_DURATION_TICKS,
+        });
       }
     }
   }
