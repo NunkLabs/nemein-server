@@ -68,20 +68,28 @@ export class Socket {
 
     /* Sends updated game states after an interval */
     const timeout = () => {
-      if (!this.active || !this.instance) return;
+      if (this.active && this.instance) {
+        gameStates =
+          this.instance instanceof Nemein
+            ? this.instance.updateNemeinStates(NemeinCommand.TickDown)
+            : this.instance.updateClassicStates(ClassicCommand.Down);
 
-      gameStates =
-        this.instance instanceof Nemein
-          ? this.instance.updateNemeinStates(NemeinCommand.TickDown)
-          : this.instance.updateClassicStates(ClassicCommand.Down);
+        this.send({
+          op: Opcodes.DATA,
+          data: gameStates,
+        });
 
-      this.send({
-        op: Opcodes.DATA,
-        data: gameStates,
-      });
+        if (gameStates.gameOver) {
+          this.active = false;
 
-      if (gameStates.gameOver) {
-        this.active = false;
+          if (this.timeout) {
+            clearTimeout(this.timeout);
+
+            this.timeout = null;
+          }
+
+          return;
+        }
       }
 
       this.timeout = setTimeout(timeout, gameStates.gameInterval);
@@ -107,26 +115,20 @@ export class Socket {
             data: gameStates,
           });
 
-          if (this.timeout) clearTimeout(this.timeout);
-
           this.timeout = setTimeout(timeout, gameStates.gameInterval);
 
           break;
         }
 
-        case Opcodes.TOGGLE: {
-          this.active = !this.active;
-
-          break;
-        }
-
         case Opcodes.INPUT: {
-          if (!this.instance || gameStates.gameOver) return;
+          if (!this.instance) return;
 
-          /* Sends the updated game state after registering an input */
+          /* Updates and sends the game state after registering an input */
+          gameStates = this.instance.inputHandle(message.data);
+
           this.send({
             op: Opcodes.DATA,
-            data: this.instance.inputHandle(message.data),
+            data: gameStates,
           });
 
           if (message.data !== SPACE || !this.timeout) return;
@@ -138,14 +140,10 @@ export class Socket {
           break;
         }
 
-        case Opcodes.HEARTBEAT: {
-          /* Updates the last seen timestamp */
-          this.timestamp = Date.now();
+        case Opcodes.TOGGLE: {
+          this.active = !this.active;
 
-          this.send({
-            op: Opcodes.HEARTBEAT,
-            timestamp: message.timestamp,
-          });
+          this.send({ op: Opcodes.TOGGLE });
 
           break;
         }
@@ -153,6 +151,18 @@ export class Socket {
         case Opcodes.PING: {
           this.send({
             op: Opcodes.PING,
+            timestamp: message.timestamp,
+          });
+
+          break;
+        }
+
+        case Opcodes.HEARTBEAT: {
+          /* Updates the last seen timestamp */
+          this.timestamp = Date.now();
+
+          this.send({
+            op: Opcodes.HEARTBEAT,
             timestamp: message.timestamp,
           });
 
