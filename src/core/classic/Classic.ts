@@ -72,6 +72,7 @@ export enum LineValue {
 }
 
 export type ClassicStates = {
+  type: "classic";
   corX: number;
   corY: number;
   ghostCorY: number;
@@ -570,6 +571,7 @@ export class Classic {
     );
 
     return {
+      type: "classic",
       corX: this.corX,
       corY: this.corY,
       ghostCorY: this.ghostCorY,

@@ -76,6 +76,7 @@ export enum LineValue {
 }
 
 export type NemeinStates = {
+  type: "nemein";
   corX: number;
   corY: number;
   ghostCorY: number;
@@ -527,6 +528,7 @@ export class Nemein {
     logger.debug(`[Nemein] This tick's interval: ${this.gameInterval}ms`);
 
     return {
+      type: "nemein",
       corX: this.corX,
       corY: this.corY,
       ghostCorY: this.ghostCorY,
