@@ -1,28 +1,34 @@
-name: Tests
+name: Main
 
 on: [push, pull_request]
 
 jobs:
   lint:
-    name: Lint & test
-    runs-on: ubuntu-latest
+    name: Node.js
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version: [18, 20]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Install Node v18
-        uses: actions/setup-node@v2
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
         with:
-          node-version: 18
+          version: 8
 
-      - name: Install Yarn
-        run: npm install -g yarn
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
 
-      - name: Install project dependencies
-        run: yarn install
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Run ESLint
-        run: yarn lint
+        run: pnpm lint
 
       - name: Run Tests
-        run: yarn test
+        run: pnpm test
