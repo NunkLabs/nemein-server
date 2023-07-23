@@ -5,7 +5,9 @@ import { TetrominoType } from "./TetrominoManager.js";
 /* Dmg consts */
 export const DEFAULT_DMG_PER_LINE = 100;
 export const DEFAULT_CRIT_DMG_MULTIPLIER = 1.2;
+
 export const DEFAULT_IMPALE_HIT_PERC = 0.1;
+
 export const DEFAULT_DAMAGING_AILMENT_DURATION_TICKS = 4;
 export const DEFAULT_IGNITE_HIT_PERC = 0.8;
 
@@ -17,6 +19,10 @@ export const DEFAULT_MAX_CHILL_EFFECTIVENESS = 0.3;
 export const DEFAULT_FREEZE_BASE_EFFECTIVENESS = 1;
 export const DEFAULT_FREEZE_DURATION_TICKS = 1;
 export const DEFAULT_FREEZE_EFFECTIVENESS_PERC = 0.05;
+
+export const DEFAULT_SHOCK_DAMAGE_MULTI = 1;
+export const DEFAULT_SHOCK_EFFECTIVENESS_PERC = 0.3;
+export const DEFAULT_SHOCK_DURATION_TICKS = 3;
 
 /* Defense consts */
 export const DEFAULT_CELL_HP = 10;
@@ -65,6 +71,7 @@ export type PerksInfo = {
   impaleExtraDmgPerCell: number;
   /* Lightning */
   shock: boolean;
+  shockDmgMulti: number;
   /* Fire */
   ignite: boolean;
   /* Cold */
@@ -151,6 +158,7 @@ export class DmgManager {
       impale: false,
       impaleExtraDmgPerCell: 0,
       shock: false,
+      shockDmgMulti: DEFAULT_SHOCK_DAMAGE_MULTI,
       ignite: false,
       chill: false,
       freeze: false,
@@ -168,6 +176,7 @@ export class DmgManager {
     >([
       [NonDamagingAilment.Chill, []],
       [NonDamagingAilment.Freeze, []],
+      [NonDamagingAilment.Shock, []],
       /* Add more if needed */
     ]);
   }
@@ -204,9 +213,10 @@ export class DmgManager {
         const isLineValidForCrit =
           row === this.challengeLine.idx || row === this.challengeLine.idx - 1;
 
-        const lineDmgPool = isLineValidForCrit
-          ? DEFAULT_DMG_PER_LINE * DEFAULT_CRIT_DMG_MULTIPLIER
-          : DEFAULT_DMG_PER_LINE;
+        const lineDmgPool =
+          (isLineValidForCrit
+            ? DEFAULT_DMG_PER_LINE * DEFAULT_CRIT_DMG_MULTIPLIER
+            : DEFAULT_DMG_PER_LINE) * this.perksInfo.shockDmgMulti;
         ret.push({
           dmg: {
             physical: lineDmgPool,
@@ -352,6 +362,7 @@ export class DmgManager {
           break;
         case NonDamagingAilment.Shock:
           this.perksInfo.shock = false;
+          this.perksInfo.shockDmgMulti = DEFAULT_SHOCK_DAMAGE_MULTI;
           break;
         default:
           break;
@@ -459,6 +470,14 @@ export class DmgManager {
                 }
                 break;
               }
+              case NonDamagingAilment.Shock: {
+                const shockDmgMulti =
+                  DEFAULT_SHOCK_DAMAGE_MULTI + ailmentInstance.effectiveness;
+                if (shockDmgMulti > this.perksInfo.shockDmgMulti) {
+                  this.perksInfo.shockDmgMulti = shockDmgMulti;
+                }
+                break;
+              }
               default:
                 break;
             }
@@ -521,14 +540,16 @@ export class DmgManager {
             numLinesCleared
           );
         }
+        const totalHpCleared =
+          numLinesCleared * DEFAULT_CELL_HP * this.boardWidth;
         if (totalLightningDmgPool) {
-          this.perksInfo.shock = Math.random() < rollChance;
+          this.handleShock(totalLightningDmgPool, rollChance, totalHpCleared);
         }
         if (totalFireDmgPool) {
           this.handleIgnite(totalFireDmgPool, rollChance);
         }
         if (totalColdDmgPool) {
-          this.handleChillFreeze(totalColdDmgPool, rollChance, numLinesCleared);
+          this.handleChillFreeze(totalColdDmgPool, rollChance, totalHpCleared);
         }
       }
     }
@@ -589,18 +610,17 @@ export class DmgManager {
    * @brief Handler logic for chill & freeze
    * @param totalColdDmgPool - Total cold damage pool dealt
    * @param freezeRollChance - Freeze roll chance
-   * @param numLinesCleared - Number of lines cleared in this tick
+   * @param totalHpCleared - Total HP of all cells cleared
    */
   private handleChillFreeze(
     totalColdDmgPool: number,
     freezeRollChance: number,
-    numLinesCleared: number
+    totalHpCleared: number
   ) {
     this.perksInfo.chill = true;
     const chillInstancesArr = this.nonDamagingAilmentInstancesMap.get(
       NonDamagingAilment.Chill
     );
-    const totalHpCleared = numLinesCleared * DEFAULT_CELL_HP * this.boardWidth;
     const chillEffectiveness = Math.min(
       (totalColdDmgPool / totalHpCleared) * DEFAULT_CHILL_EFFECTIVENESS_PERC,
       DEFAULT_MAX_CHILL_EFFECTIVENESS
@@ -627,6 +647,34 @@ export class DmgManager {
         freezeInstancesArr.push({
           effectiveness: freezeEffectiveness,
           durationTicks: DEFAULT_FREEZE_DURATION_TICKS,
+        });
+      }
+    }
+  }
+
+  /**
+   * @brief Handler logic for shock
+   * @param totalLightningDmgPool - Total lightning damage pool dealt
+   * @param shockRollChance - Shock roll chance
+   * @param totalHpCleared - Total HP of all cells cleared
+   */
+  private handleShock(
+    totalLightningDmgPool: number,
+    shockRollChance: number,
+    totalHpCleared: number
+  ) {
+    this.perksInfo.shock = Math.random() < shockRollChance;
+    if (this.perksInfo.shock) {
+      const shockInstancesArr = this.nonDamagingAilmentInstancesMap.get(
+        NonDamagingAilment.Shock
+      );
+      const shockEffectiveness =
+        (totalLightningDmgPool / totalHpCleared) *
+        DEFAULT_SHOCK_EFFECTIVENESS_PERC;
+      if (shockInstancesArr) {
+        shockInstancesArr.push({
+          effectiveness: shockEffectiveness,
+          durationTicks: DEFAULT_SHOCK_DURATION_TICKS,
         });
       }
     }
