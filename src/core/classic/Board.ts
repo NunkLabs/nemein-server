@@ -28,7 +28,7 @@ export class TetrisBoard {
 
   constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
-    boardHeight: number = DEFAULT_BOARD_HEIGHT
+    boardHeight: number = DEFAULT_BOARD_HEIGHT,
   ) {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
@@ -130,7 +130,7 @@ export class TetrisBoard {
     corX: number,
     corY: number,
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): void {
     const tetrominoCoords = TetrominoManager.getTetrominoCoords(type, rotation);
 
@@ -162,7 +162,7 @@ export class TetrisBoard {
     corY: number,
     type: TetrominoType,
     rotation: TetrominoRotation,
-    renderValue: number
+    renderValue: number,
   ): void {
     const tetrominoCoords = TetrominoManager.getTetrominoCoords(type, rotation);
     for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
@@ -192,7 +192,7 @@ export class TetrisBoard {
     corX: number,
     corY: number,
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): boolean {
     let ret = true;
 
@@ -256,7 +256,7 @@ export class TetrisBoard {
     corX: number,
     corY: number,
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): number {
     let retGhostCorY = 0;
     if (type < TetrominoType.Ghost) {
@@ -267,7 +267,7 @@ export class TetrisBoard {
 
       const tetrominoCoords = TetrominoManager.getTetrominoCoords(
         type,
-        rotation
+        rotation,
       );
       for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
         const coord = tetrominoCoords[pixelIter];
@@ -325,7 +325,7 @@ export class TetrisBoard {
           corX,
           retGhostCorY + 1,
           type,
-          rotation
+          rotation,
         )
       ) {
         retGhostCorY += 1;
@@ -363,13 +363,13 @@ export class TetrisBoard {
    */
   public prepareGhostTetrominoY(
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): number {
     let ret = 0;
     if (type < TetrominoType.Ghost) {
       const tetrominoCoords = TetrominoManager.getTetrominoCoords(
         type,
-        rotation
+        rotation,
       );
 
       const pixelsToPivot = tetrominoCoords[UPPER_Y_INDEX][Y_INDEX];
@@ -392,7 +392,7 @@ export class TetrisBoard {
   static bitmapToTetrisCols(
     bitmap: number[],
     boardWidth: number,
-    boardHeight: number
+    boardHeight: number,
   ): TetrisCol[] {
     const ret: TetrisCol[] = [];
     if (bitmap.length === boardWidth * boardHeight) {

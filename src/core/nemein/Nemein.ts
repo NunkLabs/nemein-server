@@ -125,7 +125,7 @@ export class Nemein {
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
     dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO,
     /* TBS-86: This is only for testing lock-delay */
-    dbgOverwriteTimer: boolean = false
+    dbgOverwriteTimer: boolean = false,
   ) {
     this.boardWidth = boardWidth;
     this.board = new NemeinBoard(boardWidth, boardHeight);
@@ -157,7 +157,7 @@ export class Nemein {
     const activeTetromino = this.tetrominoManager.getActiveTetromino();
     this.ghostCorY = this.board.prepareGhostTetrominoY(
       activeTetromino.type,
-      activeTetromino.rotation
+      activeTetromino.rotation,
     );
   }
 
@@ -167,7 +167,7 @@ export class Nemein {
    * @param rotateDirection - Direction to rotate
    */
   private handleRotation(
-    rotateDirection: TetrominoRotateDirection = TetrominoRotateDirection.Clockwise
+    rotateDirection: TetrominoRotateDirection = TetrominoRotateDirection.Clockwise,
   ): void {
     const activeTetromino = this.tetrominoManager.getActiveTetromino();
 
@@ -189,7 +189,7 @@ export class Nemein {
     const testOffsetArr = TetrominoManager.getTetrominoWallKickOffsets(
       activeTetromino.type,
       activeTetromino.rotation,
-      rotateDirection
+      rotateDirection,
     );
     for (
       let testOffsetIdx = 0;
@@ -210,7 +210,7 @@ export class Nemein {
           testCorX,
           testCorY,
           activeTetromino.type,
-          testRotate
+          testRotate,
         )
       ) {
         /**
@@ -230,14 +230,14 @@ export class Nemein {
               this.corX + 1,
               this.corY,
               activeTetromino.type,
-              activeTetromino.rotation
+              activeTetromino.rotation,
             ) ||
             this.board.isTetrominoRenderable(
               false,
               this.corX - 1,
               this.corY,
               activeTetromino.type,
-              activeTetromino.rotation
+              activeTetromino.rotation,
             );
           this.isTspin = !isAbleToMoveHorizontally;
         }
@@ -269,7 +269,7 @@ export class Nemein {
       this.corX,
       this.corY,
       activeTetromino.type,
-      activeTetromino.rotation
+      activeTetromino.rotation,
     );
 
     /* Prepare new tetromino for the next board update */
@@ -280,7 +280,7 @@ export class Nemein {
       this.corX,
       this.corY,
       activeTetromino.type,
-      activeTetromino.rotation
+      activeTetromino.rotation,
     );
     this.onHold = false;
 
@@ -297,7 +297,7 @@ export class Nemein {
         this.corX,
         this.corY,
         activeTetromino.type,
-        activeTetromino.rotation
+        activeTetromino.rotation,
       )
     ) {
       this.gameOver = true;
@@ -316,7 +316,7 @@ export class Nemein {
    * @return: Updated game states
    */
   public updateNemeinStates(
-    command: NemeinCommand | null = null
+    command: NemeinCommand | null = null,
   ): NemeinStates {
     let activeTetromino = this.tetrominoManager.getActiveTetromino();
     if (command !== null && !this.gameOver) {
@@ -327,14 +327,14 @@ export class Nemein {
           this.ghostCorY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Ghost
+          TetrominoType.Ghost,
         );
         this.board.renderTetromino(
           this.corX,
           this.corY,
           activeTetromino.type,
           activeTetromino.rotation,
-          activeTetromino.type
+          activeTetromino.type,
         );
         this.initRender = false;
       } else {
@@ -347,14 +347,14 @@ export class Nemein {
           this.ghostCorY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Blank
+          TetrominoType.Blank,
         );
         this.board.renderTetromino(
           this.corX,
           this.corY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Blank
+          TetrominoType.Blank,
         );
 
         let yAddValid = true;
@@ -372,7 +372,7 @@ export class Nemein {
                 testCorX,
                 this.corY,
                 activeTetromino.type,
-                activeTetromino.rotation
+                activeTetromino.rotation,
               )
             ) {
               this.corX = testCorX;
@@ -388,7 +388,7 @@ export class Nemein {
                 testCorX,
                 this.corY,
                 activeTetromino.type,
-                activeTetromino.rotation
+                activeTetromino.rotation,
               )
             ) {
               this.corX = testCorX;
@@ -424,7 +424,7 @@ export class Nemein {
               this.corX,
               testCorY,
               activeTetromino.type,
-              activeTetromino.rotation
+              activeTetromino.rotation,
             );
             if (yAddValid) {
               /* If lock-delay was enabled, getting here means that the user
@@ -474,21 +474,21 @@ export class Nemein {
           this.corX,
           this.corY,
           activeTetromino.type,
-          activeTetromino.rotation
+          activeTetromino.rotation,
         );
         this.board.renderTetromino(
           this.corX,
           this.ghostCorY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Ghost
+          TetrominoType.Ghost,
         );
         this.board.renderTetromino(
           this.corX,
           this.corY,
           activeTetromino.type,
           activeTetromino.rotation,
-          activeTetromino.type
+          activeTetromino.type,
         );
 
         /**

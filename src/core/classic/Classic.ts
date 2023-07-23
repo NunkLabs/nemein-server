@@ -129,7 +129,7 @@ export class Classic {
     boardHeight: number = DEFAULT_BOARD_HEIGHT,
     dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO,
     /* TBS-86: This is only for testing lock-delay */
-    dbgOverwriteTimer: boolean = false
+    dbgOverwriteTimer: boolean = false,
   ) {
     this.boardWidth = boardWidth;
     this.board = new TetrisBoard(boardWidth, boardHeight);
@@ -164,7 +164,7 @@ export class Classic {
     const activeTetromino = this.tetrominoManager.getActiveTetromino();
     this.ghostCorY = this.board.prepareGhostTetrominoY(
       activeTetromino.type,
-      activeTetromino.rotation
+      activeTetromino.rotation,
     );
   }
 
@@ -174,7 +174,7 @@ export class Classic {
    * @param rotateDirection - Direction to rotate
    */
   private handleRotation(
-    rotateDirection: TetrominoRotateDirection = TetrominoRotateDirection.Clockwise
+    rotateDirection: TetrominoRotateDirection = TetrominoRotateDirection.Clockwise,
   ): void {
     const activeTetromino = this.tetrominoManager.getActiveTetromino();
 
@@ -196,7 +196,7 @@ export class Classic {
     const testOffsetArr = TetrominoManager.getTetrominoWallKickOffsets(
       activeTetromino.type,
       activeTetromino.rotation,
-      rotateDirection
+      rotateDirection,
     );
     for (
       let testOffsetIdx = 0;
@@ -217,7 +217,7 @@ export class Classic {
           testCorX,
           testCorY,
           activeTetromino.type,
-          testRotate
+          testRotate,
         )
       ) {
         /**
@@ -237,14 +237,14 @@ export class Classic {
               this.corX + 1,
               this.corY,
               activeTetromino.type,
-              activeTetromino.rotation
+              activeTetromino.rotation,
             ) ||
             this.board.isTetrominoRenderable(
               false,
               this.corX - 1,
               this.corY,
               activeTetromino.type,
-              activeTetromino.rotation
+              activeTetromino.rotation,
             );
           this.isTspin = !isAbleToMoveHorizontally;
         }
@@ -272,7 +272,7 @@ export class Classic {
       this.corX,
       this.corY,
       activeTetromino.type,
-      activeTetromino.rotation
+      activeTetromino.rotation,
     );
 
     /* Prepare new tetromino for the next board update */
@@ -283,7 +283,7 @@ export class Classic {
       this.corX,
       this.corY,
       activeTetromino.type,
-      activeTetromino.rotation
+      activeTetromino.rotation,
     );
     this.onHold = false;
 
@@ -355,7 +355,7 @@ export class Classic {
         this.corX,
         this.corY,
         activeTetromino.type,
-        activeTetromino.rotation
+        activeTetromino.rotation,
       )
     ) {
       this.gameOver = true;
@@ -371,7 +371,7 @@ export class Classic {
    * @return: Updated game states
    */
   public updateClassicStates(
-    command: ClassicCommand | null = null
+    command: ClassicCommand | null = null,
   ): ClassicStates {
     let activeTetromino = this.tetrominoManager.getActiveTetromino();
     if (command !== null && !this.gameOver) {
@@ -382,14 +382,14 @@ export class Classic {
           this.ghostCorY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Ghost
+          TetrominoType.Ghost,
         );
         this.board.renderTetromino(
           this.corX,
           this.corY,
           activeTetromino.type,
           activeTetromino.rotation,
-          activeTetromino.type
+          activeTetromino.type,
         );
         this.initRender = false;
       } else {
@@ -402,14 +402,14 @@ export class Classic {
           this.ghostCorY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Blank
+          TetrominoType.Blank,
         );
         this.board.renderTetromino(
           this.corX,
           this.corY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Blank
+          TetrominoType.Blank,
         );
 
         let yAddValid = true;
@@ -427,7 +427,7 @@ export class Classic {
                 testCorX,
                 this.corY,
                 activeTetromino.type,
-                activeTetromino.rotation
+                activeTetromino.rotation,
               )
             ) {
               this.corX = testCorX;
@@ -443,7 +443,7 @@ export class Classic {
                 testCorX,
                 this.corY,
                 activeTetromino.type,
-                activeTetromino.rotation
+                activeTetromino.rotation,
               )
             ) {
               this.corX = testCorX;
@@ -465,7 +465,7 @@ export class Classic {
               this.corX,
               testCorY,
               activeTetromino.type,
-              activeTetromino.rotation
+              activeTetromino.rotation,
             );
             if (yAddValid) {
               /* If lock-delay was enabled, getting here means that the user
@@ -513,21 +513,21 @@ export class Classic {
           this.corX,
           this.corY,
           activeTetromino.type,
-          activeTetromino.rotation
+          activeTetromino.rotation,
         );
         this.board.renderTetromino(
           this.corX,
           this.ghostCorY,
           activeTetromino.type,
           activeTetromino.rotation,
-          TetrominoType.Ghost
+          TetrominoType.Ghost,
         );
         this.board.renderTetromino(
           this.corX,
           this.corY,
           activeTetromino.type,
           activeTetromino.rotation,
-          activeTetromino.type
+          activeTetromino.type,
         );
 
         /**
@@ -567,7 +567,7 @@ export class Classic {
     }
 
     logger.debug(
-      `[Tetris] This tick's interval: ${this.gameInterval}ms (Level: ${this.level})`
+      `[Tetris] This tick's interval: ${this.gameInterval}ms (Level: ${this.level})`,
     );
 
     return {

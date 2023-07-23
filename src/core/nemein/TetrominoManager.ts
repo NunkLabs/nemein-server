@@ -443,7 +443,7 @@ export class TetrominoManager {
   private dbgOverwrittenTetromino: Tetromino;
 
   constructor(
-    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO
+    dbgOverwrittenTetromino: Tetromino = DEFAULT_TEST_OVERWRITTEN_TETROMINO,
   ) {
     this.activeTetromino = {
       type: TetrominoType.Blank,
@@ -491,7 +491,7 @@ export class TetrominoManager {
     } else {
       const spawnedTetrominoType =
         Math.floor(
-          Math.random() * (MAX_TETROMINO_INDEX - MIN_TETROMINO_INDEX + 1)
+          Math.random() * (MAX_TETROMINO_INDEX - MIN_TETROMINO_INDEX + 1),
         ) + 1;
       newTetromino = {
         type: spawnedTetrominoType,
@@ -566,7 +566,7 @@ export class TetrominoManager {
    * @returns Current spawned Tetrominos queue
    */
   public getSpawnedTetrominos(
-    onlyTypeNeeded: boolean
+    onlyTypeNeeded: boolean,
   ): Tetromino[] | TetrominoType[] {
     if (onlyTypeNeeded) {
       const ret: TetrominoType[] = [];
@@ -598,7 +598,7 @@ export class TetrominoManager {
    */
   static getTetrominoCoords(
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): number[][] {
     return TETROMINOS_COORDS_ARR[type][rotation];
   }
@@ -614,7 +614,7 @@ export class TetrominoManager {
   static getTetrominoWallKickOffsets(
     type: TetrominoType,
     rotation: TetrominoRotation,
-    direction: TetrominoRotateDirection
+    direction: TetrominoRotateDirection,
   ): number[][] {
     let ret: number[][] = [];
 
@@ -623,10 +623,10 @@ export class TetrominoManager {
       ret =
         type === TetrominoType.I
           ? JSON.parse(
-              JSON.stringify(I_WALL_KICK_COR_OFFSETS[rotation][direction])
+              JSON.stringify(I_WALL_KICK_COR_OFFSETS[rotation][direction]),
             )
           : JSON.parse(
-              JSON.stringify(JLSTZ_WALL_KICK_COR_OFFSETS[rotation][direction])
+              JSON.stringify(JLSTZ_WALL_KICK_COR_OFFSETS[rotation][direction]),
             );
       if (type === TetrominoType.T) {
         if (rotation === TetrominoRotation.O) {

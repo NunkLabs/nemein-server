@@ -148,7 +148,7 @@ export class DmgManager {
     field: NemeinCol[],
     boardWidth: number,
     boardHeight: number,
-    challengeLine: ChallengeLine
+    challengeLine: ChallengeLine,
   ) {
     this.field = field;
     this.boardHeight = boardHeight;
@@ -245,7 +245,7 @@ export class DmgManager {
    */
   public dealDmgToLine(
     info: LineClearInfo,
-    isHittingChallengeLine: boolean
+    isHittingChallengeLine: boolean,
   ): LineClearInfoPostMitigation {
     const ret: LineClearInfoPostMitigation = { info, isLineCleared: false };
     let numCellsCleared = 0;
@@ -345,7 +345,7 @@ export class DmgManager {
    */
   private ailmentExpired(
     ailmentInstances: DamagingAilmentInstance[] | NonDamagingAilmentInstance[],
-    ailmentType: DamagingAilment | NonDamagingAilment
+    ailmentType: DamagingAilment | NonDamagingAilment,
   ): boolean {
     let ret = false;
     if (!ailmentInstances.length) {
@@ -427,12 +427,12 @@ export class DmgManager {
         };
         const clearInfo: LineClearInfoPostMitigation = this.dealDmgToLine(
           { dmg: ailmentDmgInfo, lineIdx: 0, criticalHit: false },
-          true /* isHittingChallengeLine */
+          true /* isHittingChallengeLine */,
         );
         if (clearInfo.isLineCleared) {
           ret.push(clearInfo);
         }
-      }
+      },
     );
 
     return ret;
@@ -483,7 +483,7 @@ export class DmgManager {
             }
           }
         }
-      }
+      },
     );
 
     return ret;
@@ -537,7 +537,7 @@ export class DmgManager {
           this.handleImpale(
             totalPhysDmgPool,
             impaleRollChance,
-            numLinesCleared
+            numLinesCleared,
           );
         }
         const totalHpCleared =
@@ -564,7 +564,7 @@ export class DmgManager {
   private handleImpale(
     totalPhysDmgPool: number,
     impaleRollChance: number,
-    numLinesCleared: number
+    numLinesCleared: number,
   ) {
     if (Math.random() < impaleRollChance) {
       this.perksInfo.impale = true;
@@ -592,7 +592,7 @@ export class DmgManager {
     this.perksInfo.ignite = Math.random() < igniteRollChance;
     if (this.perksInfo.ignite) {
       const igniteInstancesArr = this.damgingAilmentInstancesMap.get(
-        DamagingAilment.Ignite
+        DamagingAilment.Ignite,
       );
       if (igniteInstancesArr) {
         igniteInstancesArr.push({
@@ -615,15 +615,15 @@ export class DmgManager {
   private handleChillFreeze(
     totalColdDmgPool: number,
     freezeRollChance: number,
-    totalHpCleared: number
+    totalHpCleared: number,
   ) {
     this.perksInfo.chill = true;
     const chillInstancesArr = this.nonDamagingAilmentInstancesMap.get(
-      NonDamagingAilment.Chill
+      NonDamagingAilment.Chill,
     );
     const chillEffectiveness = Math.min(
       (totalColdDmgPool / totalHpCleared) * DEFAULT_CHILL_EFFECTIVENESS_PERC,
-      DEFAULT_MAX_CHILL_EFFECTIVENESS
+      DEFAULT_MAX_CHILL_EFFECTIVENESS,
     );
     if (
       chillInstancesArr &&
@@ -638,7 +638,7 @@ export class DmgManager {
     this.perksInfo.freeze = Math.random() < freezeRollChance;
     if (this.perksInfo.freeze) {
       const freezeInstancesArr = this.nonDamagingAilmentInstancesMap.get(
-        NonDamagingAilment.Freeze
+        NonDamagingAilment.Freeze,
       );
       const freezeEffectiveness =
         DEFAULT_FREEZE_BASE_EFFECTIVENESS +
@@ -661,12 +661,12 @@ export class DmgManager {
   private handleShock(
     totalLightningDmgPool: number,
     shockRollChance: number,
-    totalHpCleared: number
+    totalHpCleared: number,
   ) {
     this.perksInfo.shock = Math.random() < shockRollChance;
     if (this.perksInfo.shock) {
       const shockInstancesArr = this.nonDamagingAilmentInstancesMap.get(
-        NonDamagingAilment.Shock
+        NonDamagingAilment.Shock,
       );
       const shockEffectiveness =
         (totalLightningDmgPool / totalHpCleared) *

@@ -68,7 +68,7 @@ export class NemeinBoard {
 
   constructor(
     boardWidth: number = DEFAULT_BOARD_WIDTH,
-    boardHeight: number = DEFAULT_BOARD_HEIGHT
+    boardHeight: number = DEFAULT_BOARD_HEIGHT,
   ) {
     this.boardWidth = boardWidth;
     this.boardHeight = boardHeight;
@@ -81,7 +81,7 @@ export class NemeinBoard {
       this.gameField,
       boardWidth,
       boardHeight,
-      this.challengeLine
+      this.challengeLine,
     );
 
     this.initFields();
@@ -192,7 +192,7 @@ export class NemeinBoard {
    */
   private setClearRecord(
     info: LineClearInfo,
-    isClearingChallengeLine: boolean
+    isClearingChallengeLine: boolean,
   ): void {
     const lineClearedTypes: TetrominoType[] = [];
     const lineIdx = isClearingChallengeLine
@@ -327,7 +327,7 @@ export class NemeinBoard {
 
       const challengeLineClearInfo = this.dmgManager.dealDmgToLine(
         info,
-        true /* isHittingChallengeLine */
+        true /* isHittingChallengeLine */,
       );
       if (challengeLineClearInfo.isLineCleared) {
         /**
@@ -336,7 +336,7 @@ export class NemeinBoard {
          */
         this.setClearRecord(
           challengeLineClearInfo.info,
-          true /* isClearingChallengeLine */
+          true /* isClearingChallengeLine */,
         );
         retNumLinesCompleted += 1;
         this.shiftLinesUpByOne(this.challengeLine.idx);
@@ -368,7 +368,7 @@ export class NemeinBoard {
     corX: number,
     corY: number,
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): void {
     const tetrominoCoords = TetrominoManager.getTetrominoCoords(type, rotation);
 
@@ -400,7 +400,7 @@ export class NemeinBoard {
     corY: number,
     type: TetrominoType,
     rotation: TetrominoRotation,
-    renderValue: TetrominoType
+    renderValue: TetrominoType,
   ): void {
     const tetrominoCoords = TetrominoManager.getTetrominoCoords(type, rotation);
     for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
@@ -435,7 +435,7 @@ export class NemeinBoard {
     corX: number,
     corY: number,
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): boolean {
     let ret = true;
 
@@ -504,7 +504,7 @@ export class NemeinBoard {
     corX: number,
     corY: number,
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): number {
     let retGhostCorY = 0;
     if (type < TetrominoType.Ghost) {
@@ -515,7 +515,7 @@ export class NemeinBoard {
 
       const tetrominoCoords = TetrominoManager.getTetrominoCoords(
         type,
-        rotation
+        rotation,
       );
       for (let pixelIter = 0; pixelIter < MAX_PIXEL; pixelIter += 1) {
         const coord = tetrominoCoords[pixelIter];
@@ -573,7 +573,7 @@ export class NemeinBoard {
           corX,
           retGhostCorY + 1,
           type,
-          rotation
+          rotation,
         )
       ) {
         retGhostCorY += 1;
@@ -611,13 +611,13 @@ export class NemeinBoard {
    */
   public prepareGhostTetrominoY(
     type: TetrominoType,
-    rotation: TetrominoRotation
+    rotation: TetrominoRotation,
   ): number {
     let ret = 0;
     if (type < TetrominoType.Ghost) {
       const tetrominoCoords = TetrominoManager.getTetrominoCoords(
         type,
-        rotation
+        rotation,
       );
 
       const pixelsToPivot = tetrominoCoords[UPPER_Y_INDEX][Y_INDEX];
@@ -668,7 +668,7 @@ export class NemeinBoard {
     for (let i = 0; i < lineClearInfoArr.length; i += 1) {
       this.setClearRecord(
         lineClearInfoArr[i].info,
-        true /* isClearingChallengeLine */
+        true /* isClearingChallengeLine */,
       );
       this.shiftLinesUpByOne(this.challengeLine.idx);
       this.challengeLine.idx += 1;
@@ -690,7 +690,7 @@ export class NemeinBoard {
   static bitmapToNemeinCols(
     bitmap: number[],
     boardWidth: number,
-    boardHeight: number
+    boardHeight: number,
   ): NemeinCol[] {
     const ret: NemeinCol[] = [];
     if (bitmap.length === boardWidth * boardHeight) {

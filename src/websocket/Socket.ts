@@ -191,7 +191,7 @@ export class Socket {
 
           this.instance.interval = setInterval(
             gameUpdateInterval,
-            this.instance.states.gameInterval
+            this.instance.states.gameInterval,
           );
 
           break;
@@ -239,7 +239,7 @@ export class Socket {
 
           this.instance.interval = setInterval(
             gameUpdateInterval,
-            this.instance.states.gameInterval
+            this.instance.states.gameInterval,
           );
 
           break;

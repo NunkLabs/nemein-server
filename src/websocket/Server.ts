@@ -30,7 +30,7 @@ export class SocketServer extends WebSocketServer {
         this.sockets.delete(socket.id);
 
         logger.info(
-          `[Socket]: Connection ended with client (ID: ${socket.id})`
+          `[Socket]: Connection ended with client (ID: ${socket.id})`,
         );
       });
     }, SWEEP_INTERVAL);
