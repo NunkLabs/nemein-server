@@ -28,13 +28,13 @@ type GameInstance =
       type: "classic";
       game: Classic;
       states: ClassicStates | null;
-      interval: NodeJS.Timer | null;
+      interval: NodeJS.Timeout | null;
     }
   | {
       type: "nemein";
       game: Nemein;
       states: NemeinStates | null;
-      interval: NodeJS.Timer | null;
+      interval: NodeJS.Timeout | null;
     };
 
 type SocketOpen = {
