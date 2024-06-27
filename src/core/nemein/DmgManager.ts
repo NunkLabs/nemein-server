@@ -1,5 +1,7 @@
+import logger from "../../utils/Logger.js";
 import { ChallengeLine, NemeinCol } from "./Board.js";
 import { DEFAULT_TIME_INTERVAL_MS } from "./Nemein.js";
+import PerksManager from "./PerksManager.js";
 import { TetrominoType } from "./TetrominoManager.js";
 
 /* Dmg consts */
@@ -53,6 +55,7 @@ export enum DmgType {
   Fire,
   Cold,
   Lightning,
+  NumDmgType,
 }
 
 export enum DamagingAilment {
@@ -144,6 +147,8 @@ export class DmgManager {
     NonDamagingAilmentInstance[]
   >;
 
+  private perksManager: PerksManager;
+
   constructor(
     field: NemeinCol[],
     boardWidth: number,
@@ -179,6 +184,8 @@ export class DmgManager {
       [NonDamagingAilment.Shock, []],
       /* Add more if needed */
     ]);
+
+    this.perksManager = new PerksManager();
   }
 
   /**
@@ -217,12 +224,50 @@ export class DmgManager {
           (isLineValidForCrit
             ? DEFAULT_DMG_PER_LINE * DEFAULT_CRIT_DMG_MULTIPLIER
             : DEFAULT_DMG_PER_LINE) * this.perksInfo.shockDmgMulti;
+
+        const fireConversion = this.perksManager.getEffectiveness(DmgType.Fire);
+        const coldConversion = this.perksManager.getEffectiveness(DmgType.Cold);
+        const lightningConversion = this.perksManager.getEffectiveness(
+          DmgType.Lightning,
+        );
+        const totalConversion =
+          fireConversion + coldConversion + lightningConversion;
+
+        let fireDmgPool = 0;
+        let coldDmgPool = 0;
+        let lightningDmgPool = 0;
+        let physDmgPool = 0;
+
+        /* If total conversion > 100%, all conversions must be scaled */
+        if (totalConversion > 1) {
+          fireDmgPool = Math.round(
+            lineDmgPool * (fireConversion / totalConversion),
+          );
+          coldDmgPool = Math.round(
+            lineDmgPool * (coldConversion / totalConversion),
+          );
+          lightningDmgPool = Math.round(
+            lineDmgPool * (lightningConversion / totalConversion),
+          );
+        } else {
+          fireDmgPool = Math.round(lineDmgPool * fireConversion);
+          coldDmgPool = Math.round(lineDmgPool * coldConversion);
+          lightningDmgPool = Math.round(lineDmgPool * lightningConversion);
+        }
+        physDmgPool = Math.round(
+          lineDmgPool - (fireDmgPool + coldDmgPool + lightningDmgPool),
+        );
+
+        logger.debug(
+          `Dmg pool: ${physDmgPool}P + ${fireDmgPool}F + ${coldDmgPool}C + ${lightningDmgPool}L`,
+        );
+
         ret.push({
           dmg: {
-            physical: lineDmgPool,
-            fire: 0,
-            cold: 0,
-            lightning: 0 /* TODO: Handle more types of dmg */,
+            physical: physDmgPool,
+            fire: fireDmgPool,
+            cold: coldDmgPool,
+            lightning: lightningDmgPool /* TODO: Handle more types of dmg */,
           },
           lineIdx: row,
           criticalHit: isLineValidForCrit,
@@ -425,6 +470,7 @@ export class DmgManager {
               ? instanceInEffect.dmgPerTick
               : 0,
         };
+        logger.debug(`Proc-ing ignite damage: ${instanceInEffect.dmgPerTick}`);
         const clearInfo: LineClearInfoPostMitigation = this.dealDmgToLine(
           { dmg: ailmentDmgInfo, lineIdx: 0, criticalHit: false },
           true /* isHittingChallengeLine */,
@@ -567,6 +613,7 @@ export class DmgManager {
     numLinesCleared: number,
   ) {
     if (Math.random() < impaleRollChance) {
+      logger.debug(`Impale proc-ed`);
       this.perksInfo.impale = true;
       const currentTotalImpaleDmg =
         this.perksInfo.impaleExtraDmgPerCell *
@@ -577,6 +624,8 @@ export class DmgManager {
         ((totalPhysDmgPool + currentTotalImpaleDmg) * DEFAULT_IMPALE_HIT_PERC) /
         numLinesCleared /
         this.boardWidth;
+      this.perksInfo.impaleExtraDmgPerCell *=
+        1 + this.perksManager.getEffectiveness(DmgType.Physical);
     } else {
       this.perksInfo.impale = false;
       this.perksInfo.impaleExtraDmgPerCell = 0;
@@ -591,6 +640,7 @@ export class DmgManager {
   private handleIgnite(totalFireDmgPool: number, igniteRollChance: number) {
     this.perksInfo.ignite = Math.random() < igniteRollChance;
     if (this.perksInfo.ignite) {
+      logger.debug(`Ignite proc-ed`);
       const igniteInstancesArr = this.damgingAilmentInstancesMap.get(
         DamagingAilment.Ignite,
       );
@@ -637,6 +687,7 @@ export class DmgManager {
 
     this.perksInfo.freeze = Math.random() < freezeRollChance;
     if (this.perksInfo.freeze) {
+      logger.debug(`Freeze proc-ed`);
       const freezeInstancesArr = this.nonDamagingAilmentInstancesMap.get(
         NonDamagingAilment.Freeze,
       );
@@ -665,6 +716,7 @@ export class DmgManager {
   ) {
     this.perksInfo.shock = Math.random() < shockRollChance;
     if (this.perksInfo.shock) {
+      logger.debug(`Shock proc-ed`);
       const shockInstancesArr = this.nonDamagingAilmentInstancesMap.get(
         NonDamagingAilment.Shock,
       );
